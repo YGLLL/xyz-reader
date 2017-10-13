@@ -81,6 +81,9 @@ public class BookPageFactory {
     private RectF rect1 = new RectF();
     private RectF rect2 = new RectF();
 
+    public final static int OPENBOOKFORSTRING=0;
+    public final static int OPENBOOKFORFILEPATH=1;
+
     public BookPageFactory(int w, int h, Context context) {
         mWidth = w;
         mHeight = h;
@@ -180,14 +183,22 @@ public class BookPageFactory {
 
     /**
      *
-     * @param strFilePath
-     * @param begin
      *            表示书签记录的位置，读取书签时，将begin值给m_mbBufEnd，在读取nextpage，及成功读取到了书签
      *            记录时将m_mbBufBegin开始位置作为书签记录
      *
      * @throws IOException
      */
     @SuppressWarnings("resource")
+    public void openbook(int openBookMode,String data, int begin) throws IOException {
+        switch (openBookMode){
+            case OPENBOOKFORSTRING:
+
+                break;
+            case OPENBOOKFORFILEPATH:
+                openbook(data,begin);
+                break;
+        }
+    }
     public void openbook(String strFilePath, int begin) throws IOException {
         book_file = new File(strFilePath);
         long lLen = book_file.length();
@@ -237,8 +248,7 @@ public class BookPageFactory {
             }
             while (strParagraph.length() > 0) {
                 // 画一行文字
-                int nSize = mPaint.breakText(strParagraph, true, mVisibleWidth,
-                        null);
+                int nSize = mPaint.breakText(strParagraph, true, mVisibleWidth, null);
                 lines.add(strParagraph.substring(0, nSize));
                 strParagraph = strParagraph.substring(nSize);// 得到剩余的文字
                 // 超出最大行数则不再画

@@ -1,9 +1,16 @@
 package com.example.xyzreader.ui;
 
+import android.app.LoaderManager;
+import android.content.Loader;
+import android.content.SharedPreferences;
+import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
+import android.graphics.Color;
+import android.graphics.Paint;
 import android.graphics.Point;
+import android.graphics.Typeface;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
@@ -16,8 +23,11 @@ import android.widget.LinearLayout;
 import android.widget.Toast;
 
 import com.example.xyzreader.R;
+import com.example.xyzreader.data.ArticleLoader;
+import com.example.xyzreader.data.ItemsContract;
 import com.example.xyzreader.ui.view.PageView;
 import com.example.xyzreader.util.BookPageFactory;
+import com.example.xyzreader.util.NewBookPageFactory;
 
 import java.io.IOException;
 
@@ -25,15 +35,18 @@ import java.io.IOException;
  * Created by YGL on 2017/10/4.
  */
 
-public class ReaderActivity extends AppCompatActivity {
+public class ReaderActivity extends AppCompatActivity implements LoaderManager.LoaderCallbacks<Cursor> {
     private static final String TAG = "ReaderActivity";
     private PageView mPageView;
     private int screenHeight;
     private int readHeight; // 电子书显示高度
     private int screenWidth;
     private Bitmap mCurPageBitmap, mNextPageBitmap;
-    private BookPageFactory pagefactory;
     public static Canvas mCurPageCanvas, mNextPageCanvas;
+    public static SharedPreferences.Editor editor;
+    private static int begin = 0;// 记录的书籍开始位置
+    private long mItemId;//文章ID
+    private Cursor mCursor;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -42,6 +55,14 @@ public class ReaderActivity extends AppCompatActivity {
 
         hideSystemUI();
 
+        editor=getSharedPreferences("config", MODE_PRIVATE).edit();
+        if (savedInstanceState == null) {//为什么要判断这个
+            if (getIntent() != null && getIntent().getData() != null) {
+                mItemId = ItemsContract.Items.getItemId(getIntent().getData());
+            }
+        }
+        getLoaderManager().initLoader(0, null, this);
+
         //获取屏幕宽高
         WindowManager manage = getWindowManager();
         Display display = manage.getDefaultDisplay();
@@ -49,6 +70,7 @@ public class ReaderActivity extends AppCompatActivity {
         display.getSize(displaysize);
         screenWidth = displaysize.x;
         screenHeight = displaysize.y;
+        Log.i(TAG,"screenWidth:"+screenWidth+"       "+"screenHeight:"+screenHeight);
         readHeight = screenHeight - screenWidth / 320;
 
         mCurPageBitmap = Bitmap.createBitmap(screenWidth, screenHeight, Bitmap.Config.RGB_565);      //android:LargeHeap=true  use in  manifest application
@@ -60,24 +82,6 @@ public class ReaderActivity extends AppCompatActivity {
         LinearLayout linearLayout=(LinearLayout)findViewById(R.id.reader_layout);
         linearLayout.addView(mPageView);
 
-        pagefactory = new BookPageFactory(screenWidth, readHeight,this);// 书工厂
-        //设置背景及文字颜色
-        Bitmap bmp = Bitmap.createBitmap(screenWidth,screenHeight, Bitmap.Config.RGB_565);
-        Canvas canvas = new Canvas(bmp);
-        canvas.drawColor(getResources().getColor(R.color.read_background_paperYellow));
-        pagefactory.setM_textColor(getResources().getColor(R.color.read_textColor));
-        pagefactory.setBgBitmap(bmp);
-        // 从指定位置打开书籍，默认从开始打开
-        try {
-            pagefactory.openbook("/storage/emulated/0/perflog.txt",0);//0,书籍打开的位置
-            pagefactory.setM_fontSize(30);//字体大小
-            pagefactory.onDraw(mCurPageCanvas);
-            //word = pagefactory.getFirstTwoLineText();// 获取当前阅读位置的前两行文字,用作书签
-        } catch (IOException e) {
-            Log.e(TAG, "打开电子书失败", e);
-            Toast.makeText(this, "打开电子书失败", Toast.LENGTH_SHORT).show();
-        }
-
         //设置翻页过场动画
         mPageView.setBitmaps(mCurPageBitmap, mNextPageBitmap);
         mPageView.setOnTouchListener(new View.OnTouchListener() {
@@ -85,40 +89,13 @@ public class ReaderActivity extends AppCompatActivity {
             public boolean onTouch(View v, MotionEvent e) {
                 boolean ret = false;
                 if (v == mPageView) {
-
                     if (e.getAction() == MotionEvent.ACTION_DOWN) {
                         mPageView.abortAnimation();
                         mPageView.calcCornerXY(e.getX(), e.getY());
-                        pagefactory.onDraw(mCurPageCanvas);
                         int x = (int) e.getX();
                         int y = (int) e.getY();
-                        if (x < screenWidth / 2) {// 从左翻
-                            try {
-                                pagefactory.prePage();
-                                //begin = pagefactory.getM_mbBufBegin();// 获取当前阅读位置
-                                //word = pagefactory.getFirstTwoLineText();// 获取当前阅读位置的首行文字
-                            } catch (IOException e1) {
-                                Log.e(TAG, "onTouch->prePage error", e1);
-                            }
-                            if (pagefactory.isfirstPage()) {
-                                Toast.makeText(getBaseContext(), "当前是第一页", Toast.LENGTH_SHORT).show();
-                                return false;
-                            }
-                            pagefactory.onDraw(mNextPageCanvas);
-
-                        } else if (x >= screenWidth / 2) {// 从右翻
-                            try {
-                                pagefactory.nextPage();
-                                //begin = pagefactory.getM_mbBufBegin();// 获取当前阅读位置
-                                //word = pagefactory.getFirstTwoLineText();// 获取当前阅读位置的首行文字
-                            } catch (IOException e1) {
-                                Log.e(TAG, "onTouch->nextPage error", e1);
-                            }
-                            if (pagefactory.islastPage()) {
-                                Toast.makeText(getBaseContext(), "已经是最后一页了", Toast.LENGTH_SHORT).show();
-                                return false;
-                            }
-                            pagefactory.onDraw(mNextPageCanvas);
+                        if (x < screenWidth / 2) {// 向前翻
+                        } else if (x >= screenWidth / 2) {// 向后翻
                         }
                         //设置翻页过场动画
                         mPageView.setBitmaps(mCurPageBitmap, mNextPageBitmap);
@@ -130,6 +107,34 @@ public class ReaderActivity extends AppCompatActivity {
                 return false;
             }
         });
+    }
+
+    @Override
+    public Loader<Cursor> onCreateLoader(int i, Bundle bundle) {
+        return ArticleLoader.newInstanceForItemId(getBaseContext(), mItemId);
+    }
+
+    @Override
+    public void onLoadFinished(Loader<Cursor> cursorLoader, Cursor cursor) {
+        mCursor = cursor;
+        if (mCursor != null && !mCursor.moveToFirst()) {
+            Log.e(TAG, "Error reading item detail cursor");
+            mCursor.close();
+            mCursor = null;
+        }
+        if(mCursor!=null){
+            Log.i(TAG,"mCursor:"+mCursor.getString(ArticleLoader.Query.BODY));
+            NewBookPageFactory n=new NewBookPageFactory(getBaseContext(),mCursor.getString(ArticleLoader.Query.BODY),screenWidth,screenHeight,0);
+            n.onDraw(mCurPageCanvas);
+            mPageView.setBitmaps(mCurPageBitmap, mNextPageBitmap);
+        }else {
+            Log.i(TAG,"mCursor is null");
+        }
+    }
+
+    @Override
+    public void onLoaderReset(Loader<Cursor> cursorLoader) {
+        mCursor = null;
     }
 
     /**
