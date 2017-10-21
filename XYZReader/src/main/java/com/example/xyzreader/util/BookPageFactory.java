@@ -8,6 +8,9 @@ import android.graphics.Region;
 import android.graphics.Typeface;
 import android.text.TextUtils;
 import android.util.Log;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -50,18 +53,22 @@ public class BookPageFactory {
 
     private DecimalFormat df;
 
+    private View firstPage;
+    private Boolean readFirstPage;
+
     public BookPageFactory(Context context,int screenWidth, int screenHeight){
         this.mContext=context;
         this.screenWidth=screenWidth;
         this.screenHeight=screenHeight;
         book="";
         readAddress=0;
+        readFirstPage=true;
 
         //读取默认配置
         marginWidth=(int) mContext.getResources().getDimension(R.dimen.width_margin);
         marginHeight=(int) mContext.getResources().getDimension(R.dimen.heigth_margin);
         marginLine=(int) mContext.getResources().getDimension(R.dimen.line_margin);
-        backColor = mContext.getResources().getColor(R.color.Black);
+        backColor = mContext.getResources().getColor(R.color.white);
         textColor=mContext.getResources().getColor(R.color.DimGray);
         //设置画笔
         p=new Paint();
@@ -78,21 +85,30 @@ public class BookPageFactory {
     }
 
     public void onDraw(Canvas c) {
-        c.drawColor(backColor);
+        //c.drawColor(backColor);
 
-        //画文字
-        pageString=getPageString(readAddress);
-        int lineX=marginWidth;
-        int lineY=marginHeight+textSize;
-        for (String line: pageString){
-            c.drawText(line,lineX,lineY,p);
-            lineY+=textSize+marginLine;
+        firstPage.draw(c);
+        /*
+        if(firstPage!=null&&readFirstPage){
+
+            Log.i(TAG,"onDraw firstPage.draw(c);");
+        }else {
+            Log.i(TAG,"onDraw 画文字");
+            //画文字
+            pageString=getPageString(readAddress);
+            int lineX=marginWidth;
+            int lineY=marginHeight+textSize;
+            for (String line: pageString){
+                c.drawText(line,lineX,lineY,p);
+                lineY+=textSize+marginLine;
+            }
+
+            //画进度
+            float fPercent = (float) (readAddress * 1.0 / book.length());
+            String strPercent = df.format(fPercent * 100) + "%";
+            c.drawText(strPercent,marginWidth,marginHeight+textSize*(maxLine+1)+marginLine*maxLine, p);
         }
-
-        //画进度
-        float fPercent = (float) (readAddress * 1.0 / book.length());
-        String strPercent = df.format(fPercent * 100) + "%";
-        c.drawText(strPercent,marginWidth,marginHeight+textSize*(maxLine+1)+marginLine*maxLine, p);
+        */
     }
 
     //读取指定位置一页内容
@@ -126,8 +142,13 @@ public class BookPageFactory {
     //翻到上一页
     public void prePage(){
         if (readAddress<=0){
-            showMessage("已经是第一页");
+            if (readFirstPage){
+                showMessage("已经是第一页");
+            }
+            readFirstPage=true;
             return;
+        }else {
+            readFirstPage=false;
         }
         readAddress=prePageAddress(readAddress);
     }
@@ -265,5 +286,9 @@ public class BookPageFactory {
 
     public void setTextTypeface(Typeface textTypeface) {
         this.textTypeface = textTypeface;
+    }
+
+    public void setFirstPage(View firstPage) {
+        this.firstPage = firstPage;
     }
 }

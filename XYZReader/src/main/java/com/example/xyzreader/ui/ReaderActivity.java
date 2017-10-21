@@ -11,11 +11,13 @@ import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Point;
 import android.graphics.Typeface;
+import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.Display;
+import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.WindowManager;
@@ -49,9 +51,7 @@ public class ReaderActivity extends AppCompatActivity implements LoaderManager.L
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_reader);
         Log.i(TAG,"protected void onCreate");
-
         hideSystemUI();
 
         editor=getSharedPreferences("config", MODE_PRIVATE).edit();
@@ -77,11 +77,15 @@ public class ReaderActivity extends AppCompatActivity implements LoaderManager.L
         mNextPageCanvas = new Canvas(mNextPageBitmap);
 
         mPageView = new PageView(this, screenWidth, readHeight);
-        LinearLayout linearLayout=(LinearLayout)findViewById(R.id.reader_layout);
-        linearLayout.addView(mPageView);
+        setContentView(mPageView);
+        //加载布局
+        LayoutInflater inflater = LayoutInflater.from(this);
+        LinearLayout firstPage = (LinearLayout)inflater.inflate(R.layout.first_page,null);
+        firstPage.draw(mCurPageCanvas);
 
         bookPageFactory=new BookPageFactory(getBaseContext(),screenWidth,screenHeight);
-        bookPageFactory.onDraw(mCurPageCanvas);
+        bookPageFactory.setFirstPage(firstPage);
+        //bookPageFactory.onDraw(mCurPageCanvas);
         //设置翻页过场动画
         mPageView.setBitmaps(mCurPageBitmap, mNextPageBitmap);
         mPageView.setOnTouchListener(new View.OnTouchListener() {
@@ -92,7 +96,7 @@ public class ReaderActivity extends AppCompatActivity implements LoaderManager.L
                     if (e.getAction() == MotionEvent.ACTION_DOWN) {
                         mPageView.abortAnimation();
                         mPageView.calcCornerXY(e.getX(), e.getY());
-                        bookPageFactory.onDraw(mCurPageCanvas);
+                        //bookPageFactory.onDraw(mCurPageCanvas);
 
                         int x = (int) e.getX();
                         int y = (int) e.getY();
@@ -155,7 +159,6 @@ public class ReaderActivity extends AppCompatActivity implements LoaderManager.L
                         | View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
         );
     }
-
     private void showSystemUI() {
         getWindow().getDecorView().setSystemUiVisibility(
                 View.SYSTEM_UI_FLAG_LAYOUT_STABLE
