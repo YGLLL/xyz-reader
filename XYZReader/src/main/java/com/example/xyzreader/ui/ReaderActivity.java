@@ -16,6 +16,8 @@ import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.design.widget.FloatingActionButton;
+import android.support.v4.app.NotificationCompat;
+import android.support.v4.app.ShareCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.Display;
@@ -53,6 +55,7 @@ public class ReaderActivity extends AppCompatActivity implements LoaderManager.L
     private BookPageFactory bookPageFactory;
     private LinearLayout control;
     private SeekBar seekBar;
+    FloatingActionButton share;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -87,13 +90,7 @@ public class ReaderActivity extends AppCompatActivity implements LoaderManager.L
         seekBar.setOnSeekBarChangeListener(this);
         control=(LinearLayout)findViewById(R.id.control);
         control.setVisibility(View.GONE);
-        FloatingActionButton share=(FloatingActionButton)findViewById(R.id.share);
-        share.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Intent intent=Intent.createChooser();
-            }
-        });
+        share =(FloatingActionButton)findViewById(R.id.share);
 
         bookPageFactory=new BookPageFactory(getBaseContext(),screenWidth,screenHeight);
         bookPageFactory.onDraw(mCurPageCanvas);
@@ -155,6 +152,17 @@ public class ReaderActivity extends AppCompatActivity implements LoaderManager.L
             Log.i(TAG,"mCursor:"+mCursor.getString(ArticleLoader.Query.BODY));
             bookPageFactory.setBook(mCursor.getString(ArticleLoader.Query.BODY),getReadAddress(mCursor.getString(ArticleLoader.Query.TITLE)));
             bookPageFactory.onDraw(mCurPageCanvas);
+
+            share.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    Intent intent=ShareCompat.IntentBuilder.from(this);
+                    intent.setType("text/plain");
+                    intent.setText();
+
+                    Intent chooserIntent=Intent.createChooser("分享文章");
+                }
+            });
         }
     }
 
