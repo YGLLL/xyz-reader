@@ -1,6 +1,7 @@
 package com.example.xyzreader.ui;
 
 import android.app.LoaderManager;
+import android.content.Intent;
 import android.content.Loader;
 import android.content.SharedPreferences;
 import android.database.Cursor;
@@ -14,6 +15,7 @@ import android.graphics.Typeface;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
+import android.support.design.widget.FloatingActionButton;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.Display;
@@ -80,11 +82,18 @@ public class ReaderActivity extends AppCompatActivity implements LoaderManager.L
 
         mPageView = new PageView(this, screenWidth, readHeight);
         FrameLayout contentLayout=(FrameLayout) findViewById(R.id.content_layout);
+        contentLayout.addView(mPageView);
         seekBar=(SeekBar)findViewById(R.id.seekBar);
         seekBar.setOnSeekBarChangeListener(this);
         control=(LinearLayout)findViewById(R.id.control);
         control.setVisibility(View.GONE);
-        contentLayout.addView(mPageView);
+        FloatingActionButton share=(FloatingActionButton)findViewById(R.id.share);
+        share.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent intent=Intent.createChooser();
+            }
+        });
 
         bookPageFactory=new BookPageFactory(getBaseContext(),screenWidth,screenHeight);
         bookPageFactory.onDraw(mCurPageCanvas);
