@@ -13,4 +13,6 @@
     <dimen name="width_margin">10dp</dimen>
     <dimen name="heigth_margin">10dp</dimen>
     <dimen name="reading_default_text_size">20sp</dimen>
+
+    <dimen name="toolbar_image_paddingBottom">10dp</dimen>
 </resources>

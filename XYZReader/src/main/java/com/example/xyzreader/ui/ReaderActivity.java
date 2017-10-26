@@ -21,7 +21,9 @@ import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.WindowManager;
+import android.widget.FrameLayout;
 import android.widget.LinearLayout;
+import android.widget.SeekBar;
 import android.widget.Toast;
 
 import com.example.xyzreader.R;
@@ -36,7 +38,7 @@ import java.io.IOException;
  * Created by YGL on 2017/10/4.
  */
 
-public class ReaderActivity extends AppCompatActivity implements LoaderManager.LoaderCallbacks<Cursor> {
+public class ReaderActivity extends AppCompatActivity implements LoaderManager.LoaderCallbacks<Cursor>,SeekBar.OnSeekBarChangeListener {
     private static final String TAG = "ReaderActivity";
     private PageView mPageView;
     private int screenHeight;
@@ -44,17 +46,17 @@ public class ReaderActivity extends AppCompatActivity implements LoaderManager.L
     private int screenWidth;
     private Bitmap mCurPageBitmap, mNextPageBitmap;
     public static Canvas mCurPageCanvas, mNextPageCanvas;
-    public static SharedPreferences.Editor editor;
     private long mItemId;//文章ID
     private Cursor mCursor;
     private BookPageFactory bookPageFactory;
+    private LinearLayout control;
+    private SeekBar seekBar;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        Log.i(TAG,"protected void onCreate");
+        setContentView(R.layout.activity_article_content);
         hideSystemUI();
 
-        editor=getSharedPreferences("config", MODE_PRIVATE).edit();
         if (savedInstanceState == null) {//为什么要判断这个
             if (getIntent() != null && getIntent().getData() != null) {
                 mItemId = ItemsContract.Items.getItemId(getIntent().getData());
@@ -77,15 +79,15 @@ public class ReaderActivity extends AppCompatActivity implements LoaderManager.L
         mNextPageCanvas = new Canvas(mNextPageBitmap);
 
         mPageView = new PageView(this, screenWidth, readHeight);
-        setContentView(mPageView);
-        //加载布局
-        LayoutInflater inflater = LayoutInflater.from(this);
-        LinearLayout firstPage = (LinearLayout)inflater.inflate(R.layout.first_page,null);
-        firstPage.draw(mCurPageCanvas);
+        FrameLayout contentLayout=(FrameLayout) findViewById(R.id.content_layout);
+        seekBar=(SeekBar)findViewById(R.id.seekBar);
+        seekBar.setOnSeekBarChangeListener(this);
+        control=(LinearLayout)findViewById(R.id.control);
+        control.setVisibility(View.GONE);
+        contentLayout.addView(mPageView);
 
         bookPageFactory=new BookPageFactory(getBaseContext(),screenWidth,screenHeight);
-        bookPageFactory.setFirstPage(firstPage);
-        //bookPageFactory.onDraw(mCurPageCanvas);
+        bookPageFactory.onDraw(mCurPageCanvas);
         //设置翻页过场动画
         mPageView.setBitmaps(mCurPageBitmap, mNextPageBitmap);
         mPageView.setOnTouchListener(new View.OnTouchListener() {
@@ -96,10 +98,19 @@ public class ReaderActivity extends AppCompatActivity implements LoaderManager.L
                     if (e.getAction() == MotionEvent.ACTION_DOWN) {
                         mPageView.abortAnimation();
                         mPageView.calcCornerXY(e.getX(), e.getY());
-                        //bookPageFactory.onDraw(mCurPageCanvas);
+                        bookPageFactory.onDraw(mCurPageCanvas);
 
                         int x = (int) e.getX();
                         int y = (int) e.getY();
+                        if(x>screenWidth/3&&x<screenWidth*2/3){//显示控制菜单
+                            if(control.getVisibility()==View.GONE){
+                                control.setVisibility(View.VISIBLE);
+                                seekBar.setProgress((int)((bookPageFactory.getReadAddress()*100.0)/bookPageFactory.getBookLength()));
+                            }else {
+                                control.setVisibility(View.GONE);
+                            }
+                            return false;
+                        }
                         if (x < screenWidth / 2) {// 向前翻
                             bookPageFactory.prePage();
                         } else if (x >= screenWidth / 2) {// 向后翻
@@ -133,7 +144,7 @@ public class ReaderActivity extends AppCompatActivity implements LoaderManager.L
         }
         if(mCursor!=null){
             Log.i(TAG,"mCursor:"+mCursor.getString(ArticleLoader.Query.BODY));
-            bookPageFactory.setBook(mCursor.getString(ArticleLoader.Query.BODY));
+            bookPageFactory.setBook(mCursor.getString(ArticleLoader.Query.BODY),getReadAddress(mCursor.getString(ArticleLoader.Query.TITLE)));
             bookPageFactory.onDraw(mCurPageCanvas);
         }
     }
@@ -141,6 +152,30 @@ public class ReaderActivity extends AppCompatActivity implements LoaderManager.L
     @Override
     public void onLoaderReset(Loader<Cursor> cursorLoader) {
         mCursor = null;
+    }
+
+    private int getReadAddress(String title){
+        SharedPreferences sharedPreferences=getSharedPreferences("ReadAddress",MODE_PRIVATE);
+        return sharedPreferences.getInt(title,0);
+    }
+    private void setReadAddress(String title,int readAddress){
+        SharedPreferences.Editor editor=getSharedPreferences("ReadAddress",MODE_PRIVATE).edit();
+        editor.putInt(title,readAddress);
+        editor.commit();
+    }
+
+    @Override
+    protected void onResume(){
+        super.onResume();
+        hideSystemUI();
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        if(mCursor!=null){
+            setReadAddress(mCursor.getString(ArticleLoader.Query.TITLE),bookPageFactory.getReadAddress());
+        }
     }
 
     /**
@@ -166,5 +201,41 @@ public class ReaderActivity extends AppCompatActivity implements LoaderManager.L
                         | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
                         | View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
         );
+    }
+
+    private void flipPage(int address){
+        mPageView.abortAnimation();
+        MotionEvent e;
+        if(address<bookPageFactory.getReadAddress()){
+            //向前翻
+            mPageView.calcCornerXY(10, screenHeight-10);
+            e = MotionEvent.obtain(0, 0, MotionEvent.ACTION_MOVE, screenWidth-20, screenHeight-20, 1);
+        }else {
+            //向后翻
+            mPageView.calcCornerXY(screenWidth-10, screenHeight-10);
+            e = MotionEvent.obtain(0, 0, MotionEvent.ACTION_MOVE, 20, screenHeight-20, 1);
+        }
+        bookPageFactory.setReadAddress(address);
+        bookPageFactory.onDraw(mNextPageCanvas);
+        mPageView.setBitmaps(mCurPageBitmap, mNextPageBitmap);
+        mPageView.doTouchEvent(e);
+    }
+
+    int address=0;
+    @Override
+    public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+        Log.i(TAG,"onProgressChanged progress"+progress);
+        address=bookPageFactory.getBookLength()*progress/100;
+    }
+
+    @Override
+    public void onStartTrackingTouch(SeekBar seekBar) {
+
+    }
+
+    @Override
+    public void onStopTrackingTouch(SeekBar seekBar) {
+        Log.i(TAG,"onStopTrackingTouch");
+        flipPage(address);
     }
 }

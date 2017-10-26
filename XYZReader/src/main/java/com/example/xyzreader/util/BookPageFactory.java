@@ -52,17 +52,12 @@ public class BookPageFactory {
     private int readAddress;
 
     private DecimalFormat df;
-
-    private View firstPage;
-    private Boolean readFirstPage;
-
     public BookPageFactory(Context context,int screenWidth, int screenHeight){
         this.mContext=context;
         this.screenWidth=screenWidth;
         this.screenHeight=screenHeight;
         book="";
         readAddress=0;
-        readFirstPage=true;
 
         //读取默认配置
         marginWidth=(int) mContext.getResources().getDimension(R.dimen.width_margin);
@@ -85,30 +80,21 @@ public class BookPageFactory {
     }
 
     public void onDraw(Canvas c) {
-        //c.drawColor(backColor);
+        c.drawColor(backColor);
 
-        firstPage.draw(c);
-        /*
-        if(firstPage!=null&&readFirstPage){
-
-            Log.i(TAG,"onDraw firstPage.draw(c);");
-        }else {
-            Log.i(TAG,"onDraw 画文字");
-            //画文字
-            pageString=getPageString(readAddress);
-            int lineX=marginWidth;
-            int lineY=marginHeight+textSize;
-            for (String line: pageString){
-                c.drawText(line,lineX,lineY,p);
-                lineY+=textSize+marginLine;
-            }
-
-            //画进度
-            float fPercent = (float) (readAddress * 1.0 / book.length());
-            String strPercent = df.format(fPercent * 100) + "%";
-            c.drawText(strPercent,marginWidth,marginHeight+textSize*(maxLine+1)+marginLine*maxLine, p);
+        //画文字
+        pageString=getPageString(readAddress);
+        int lineX=marginWidth;
+        int lineY=marginHeight+textSize;
+        for (String line: pageString){
+            c.drawText(line,lineX,lineY,p);
+            lineY+=textSize+marginLine;
         }
-        */
+
+        //画进度
+        float fPercent = (float) (readAddress * 1.0 / book.length());
+        String strPercent = df.format(fPercent * 100) + "%";
+        c.drawText(strPercent,marginWidth,marginHeight+textSize*(maxLine+1)+marginLine*maxLine, p);
     }
 
     //读取指定位置一页内容
@@ -142,13 +128,8 @@ public class BookPageFactory {
     //翻到上一页
     public void prePage(){
         if (readAddress<=0){
-            if (readFirstPage){
-                showMessage("已经是第一页");
-            }
-            readFirstPage=true;
+            showMessage("已经是第一页");
             return;
-        }else {
-            readFirstPage=false;
         }
         readAddress=prePageAddress(readAddress);
     }
@@ -257,6 +238,7 @@ public class BookPageFactory {
     public int getReadAddress() {
         return readAddress;
     }
+    public int getBookLength(){return book.length();}
 
     //以下为设置方法
     public void setBook(String book){
@@ -288,7 +270,7 @@ public class BookPageFactory {
         this.textTypeface = textTypeface;
     }
 
-    public void setFirstPage(View firstPage) {
-        this.firstPage = firstPage;
+    public void setReadAddress(int readAddress) {
+        this.readAddress = readAddress;
     }
 }
