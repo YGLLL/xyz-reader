@@ -61,6 +61,7 @@ public class ReaderActivity extends AppCompatActivity implements LoaderManager.L
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_article_content);
         hideSystemUI();
+        getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);//保持屏幕常亮
 
         if (savedInstanceState == null) {//为什么要判断这个
             if (getIntent() != null && getIntent().getData() != null) {
@@ -156,11 +157,18 @@ public class ReaderActivity extends AppCompatActivity implements LoaderManager.L
             share.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    Intent intent=ShareCompat.IntentBuilder.from(this);
+                    Intent intent=new Intent(Intent.ACTION_SEND);
                     intent.setType("text/plain");
-                    intent.setText();
-
-                    Intent chooserIntent=Intent.createChooser("分享文章");
+                    intent.putExtra(Intent.EXTRA_TEXT, mCursor.getString(ArticleLoader.Query.BODY));
+                    Intent chooserIntent=Intent.createChooser(intent,getResources().getString(R.string.share_title));
+                    if (chooserIntent == null) {
+                        return;
+                    }
+                    try {
+                        startActivity(chooserIntent);
+                    } catch (android.content.ActivityNotFoundException ex) {
+                        Toast.makeText(getBaseContext(), "Can't find share component to share", Toast.LENGTH_SHORT).show();
+                    }
                 }
             });
         }
@@ -226,11 +234,11 @@ public class ReaderActivity extends AppCompatActivity implements LoaderManager.L
         if(address<bookPageFactory.getReadAddress()){
             //向前翻
             mPageView.calcCornerXY(10, screenHeight-10);
-            e = MotionEvent.obtain(0, 0, MotionEvent.ACTION_MOVE, screenWidth-20, screenHeight-20, 1);
+            e = MotionEvent.obtain(0, 0, MotionEvent.ACTION_MOVE, 20, screenHeight-20, 1);
         }else {
             //向后翻
             mPageView.calcCornerXY(screenWidth-10, screenHeight-10);
-            e = MotionEvent.obtain(0, 0, MotionEvent.ACTION_MOVE, 20, screenHeight-20, 1);
+            e = MotionEvent.obtain(0, 0, MotionEvent.ACTION_MOVE, screenWidth-20, screenHeight-20, 1);
         }
         bookPageFactory.setReadAddress(address);
         bookPageFactory.onDraw(mNextPageCanvas);
