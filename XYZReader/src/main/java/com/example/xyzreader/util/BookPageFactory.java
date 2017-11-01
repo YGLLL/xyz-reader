@@ -1,6 +1,8 @@
 package com.example.xyzreader.util;
 
 import android.content.Context;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
@@ -23,9 +25,8 @@ import java.util.List;
 /**
  * Created by YGL on 2017/10/12.
  */
-
+//用于生产给PageWidget显示的Bitmap
 public class BookPageFactory {
-    //用于生产给PageWidget显示的Bitmap
     private static final String TAG = "ReaderActivity";
     private Context mContext;
 
@@ -52,6 +53,11 @@ public class BookPageFactory {
     private int readAddress;
 
     private DecimalFormat df;
+
+    private Bitmap coverImage;
+    private String title;
+    private String subTitle;
+
     public BookPageFactory(Context context,int screenWidth, int screenHeight){
         this.mContext=context;
         this.screenWidth=screenWidth;
@@ -82,19 +88,42 @@ public class BookPageFactory {
     public void onDraw(Canvas c) {
         c.drawColor(backColor);
 
-        //画文字
-        pageString=getPageString(readAddress);
-        int lineX=marginWidth;
-        int lineY=marginHeight+textSize;
-        for (String line: pageString){
-            c.drawText(line,lineX,lineY,p);
-            lineY+=textSize+marginLine;
-        }
+        if(readAddress<0&&(coverImage!=null||title!=null||subTitle!=null)){
+            //画封面
+            //上下距离
+            int marginCover=(screenHeight-screenWidth-textSize*3-marginLine*2)/2;
+            //画封面图片
+            if(coverImage!=null){
+                c.drawBitmap(BitmapFactory.decodeResource(mContext.getResources(),R.drawable.a),0,marginCover,p);
+            }
+            //画标题
+            if(!TextUtils.isEmpty(title)){
+                //标题专用画笔
+                Paint titlePaint=new Paint();
+                p.setColor(mContext.getResources().getColor(R.color.Black));
+                p.setTextSize(textSize*2);
+                p.setTypeface(textTypeface);
+                c.drawText(title,marginWidth,screenHeight-marginCover-screenWidth-marginLine,titlePaint);
+            }
+            //画副标题
+            if(!TextUtils.isEmpty(subTitle)){
+                c.drawText(subTitle,marginWidth,screenHeight-marginCover-screenWidth-marginLine*2-textSize*2,p);
+            }
+        }else {
+            //画文字
+            pageString=getPageString(readAddress);
+            int lineX=marginWidth;
+            int lineY=marginHeight+textSize;
+            for (String line: pageString){
+                c.drawText(line,lineX,lineY,p);
+                lineY+=textSize+marginLine;
+            }
 
-        //画进度
-        float fPercent = (float) (readAddress * 1.0 / book.length());
-        String strPercent = df.format(fPercent * 100) + "%";
-        c.drawText(strPercent,marginWidth,marginHeight+textSize*(maxLine+1)+marginLine*maxLine, p);
+            //画进度
+            float fPercent = (float) (readAddress * 1.0 / book.length());
+            String strPercent = df.format(fPercent * 100) + "%";
+            c.drawText(strPercent,marginWidth,marginHeight+textSize*(maxLine+1)+marginLine*maxLine, p);
+        }
     }
 
     //读取指定位置一页内容
@@ -127,7 +156,7 @@ public class BookPageFactory {
 
     //翻到上一页
     public void prePage(){
-        if (readAddress<=0){
+        if (readAddress<=-1){
             showMessage("已经是第一页");
             return;
         }
@@ -145,6 +174,9 @@ public class BookPageFactory {
 
     //得到上一页大概的起始位置
     private int prePageAddress(int address){
+        if(address<=0){
+            return -1;
+        }
         int myAddress=address;
         if (!TextUtils.isEmpty(book)){
             //以下为风骚时刻，请勿轻易模仿
@@ -176,12 +208,19 @@ public class BookPageFactory {
             }
             Log.i("performanceLog","最终myAddress="+myAddress);
         }
-        return myAddress;
+        if(myAddress<0){
+            return 0;
+        }else {
+            return myAddress;
+        }
     }
 
     //得到下一页的起始位置
     private int nextPageAddress(int address){
-        if(!TextUtils.isEmpty(book)&&address>=0){
+        if(address<0){
+            return 0;
+        }
+        if(!TextUtils.isEmpty(book)){
             for (int i=0;i<maxLine;i++){
                 //计算每一行的长度
                 String word=book.substring(address,
@@ -245,8 +284,14 @@ public class BookPageFactory {
         setBook(book,0);
     }
     public void setBook(String book,int readAddress){
+        setBook(book,readAddress,null,null,null);
+    }
+    public void setBook(String book,int readAddress,Bitmap coverImage,String title,String subTitle){
         this.book=book;
         this.readAddress=readAddress;
+        this.coverImage=coverImage;
+        this.title=title;
+        this.subTitle=subTitle;
     }
 
     public void setMargin(int marginX,int marginY){

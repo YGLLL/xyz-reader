@@ -1,5 +1,6 @@
 package com.example.xyzreader.remote;
 
+import android.text.TextUtils;
 import android.util.Log;
 
 import org.json.JSONArray;

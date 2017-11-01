@@ -151,7 +151,9 @@ public class ReaderActivity extends AppCompatActivity implements LoaderManager.L
         }
         if(mCursor!=null){
             Log.i(TAG,"mCursor:"+mCursor.getString(ArticleLoader.Query.BODY));
-            bookPageFactory.setBook(mCursor.getString(ArticleLoader.Query.BODY),getReadAddress(mCursor.getString(ArticleLoader.Query.TITLE)));
+            bookPageFactory.setBook(mCursor.getString(ArticleLoader.Query.BODY),
+                    getReadAddress(mCursor.getString(ArticleLoader.Query.TITLE)),
+                    ArticleLoader.Query.PHOTO_URL);
             bookPageFactory.onDraw(mCurPageCanvas);
 
             share.setOnClickListener(new View.OnClickListener() {
