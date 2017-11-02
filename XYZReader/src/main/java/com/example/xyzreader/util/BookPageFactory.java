@@ -90,24 +90,36 @@ public class BookPageFactory {
 
         if(readAddress<0&&(coverImage!=null||title!=null||subTitle!=null)){
             //画封面
-            //上下距离
-            int marginCover=(screenHeight-screenWidth-textSize*3-marginLine*2)/2;
+            int marginTop=(screenHeight-screenWidth-textSize*3-marginLine*2)/2;
             //画封面图片
             if(coverImage!=null){
-                c.drawBitmap(BitmapFactory.decodeResource(mContext.getResources(),R.drawable.a),0,marginCover,p);
+                c.drawBitmap(coverImage,0,marginTop,p);
+            }else {
+                c.drawBitmap(BitmapFactory.decodeResource(mContext.getResources(),R.drawable.empty_detail),0,marginTop,p);
             }
             //画标题
+            int lineX=marginWidth;
+            int lineY=marginTop+screenWidth+marginLine;
             if(!TextUtils.isEmpty(title)){
                 //标题专用画笔
                 Paint titlePaint=new Paint();
-                p.setColor(mContext.getResources().getColor(R.color.Black));
-                p.setTextSize(textSize*2);
-                p.setTypeface(textTypeface);
-                c.drawText(title,marginWidth,screenHeight-marginCover-screenWidth-marginLine,titlePaint);
+                titlePaint.setColor(mContext.getResources().getColor(R.color.Black));
+                int titleSize=textSize*6/5;
+                titlePaint.setTextSize(titleSize);
+                titlePaint.setTypeface(textTypeface);
+                List<String> list=getLineString(titlePaint,title);
+                for (String line: list){
+                    c.drawText(line,lineX,lineY,titlePaint);
+                    lineY+=titleSize+marginLine;
+                }
             }
             //画副标题
             if(!TextUtils.isEmpty(subTitle)){
-                c.drawText(subTitle,marginWidth,screenHeight-marginCover-screenWidth-marginLine*2-textSize*2,p);
+                List<String> list=getLineString(p,subTitle);
+                for (String line: list){
+                    c.drawText(line,lineX,lineY,p);
+                    lineY+=textSize+marginLine;
+                }
             }
         }else {
             //画文字
@@ -132,8 +144,36 @@ public class BookPageFactory {
         if(!TextUtils.isEmpty(book)&&address>=0){
             for (int i=0;i<maxLine;i++){
                 String word=book.substring(address,
-                        (address+oneLineCharacterQuantity()*2)>book.length()?book.length():(address+oneLineCharacterQuantity()*2));
+                        (address+oneLineCharacterQuantity(p)*2)>book.length()?book.length():(address+oneLineCharacterQuantity(p)*2));
                 int a=p.breakText(word,true,lineWidth,null);//自动折行
+                int b=word.indexOf("\n");
+                if(b!=-1&&b<=a){
+                    //如果有转行符
+                    b+=1;
+                }else {
+                    b=word.lastIndexOf(" ",a);
+                    if (b!=-1&&isMultipleString(word.substring(0,a))){
+                        //如果有空格
+                    }else {
+                        //既没有转行符，也没有空格
+                        b=a;
+                    }
+                }
+                list.add(word.substring(0,b));
+                address+=b;
+            }
+        }
+        return list;
+    }
+    //将一段字符串分成多行
+    private List<String> getLineString(Paint paint,String string){
+        List<String> list=new ArrayList<>();
+        if(!TextUtils.isEmpty(string)){
+            int address=0;
+            while (address!=string.length()){
+                String word=string.substring(address,
+                        (address+oneLineCharacterQuantity(paint)*2)>string.length()?string.length():(address+oneLineCharacterQuantity(paint)*2));
+                int a=paint.breakText(word,true,lineWidth,null);//自动折行
                 int b=word.indexOf("\n");
                 if(b!=-1&&b<=a){
                     //如果有转行符
@@ -182,7 +222,7 @@ public class BookPageFactory {
             //以下为风骚时刻，请勿轻易模仿
             //使用穷举法求解
             int z=nextPageAddress(myAddress);
-            int accuracy=(oneLineCharacterQuantity()*maxLine)/4;//设置开始精度
+            int accuracy=(oneLineCharacterQuantity(p)*maxLine)/4;//设置开始精度
             while (z!=address||z==book.length()){
                 if(z<address){
                     myAddress+=accuracy;
@@ -224,7 +264,7 @@ public class BookPageFactory {
             for (int i=0;i<maxLine;i++){
                 //计算每一行的长度
                 String word=book.substring(address,
-                        (address+oneLineCharacterQuantity()*2)>book.length()?book.length():(address+oneLineCharacterQuantity()*2));
+                        (address+oneLineCharacterQuantity(p)*2)>book.length()?book.length():(address+oneLineCharacterQuantity(p)*2));
                 int a=p.breakText(word,true,lineWidth,null);
                 int b=word.indexOf("\n");
                 if(b!=-1&&b<=a){
@@ -265,9 +305,10 @@ public class BookPageFactory {
         return firstString&&intermediateSpace&&secondString;
     }
 
-    private int oneLineCharacterQuantity(){
+    //计算一行大概能容纳的字符串数
+    private int oneLineCharacterQuantity(Paint paint){
         String testString="aAbBcCdDeEfFgGhHiIjJkKlLmMnNoOpPqQrRsStTuUvVwWxXyYzZ";
-        return p.breakText(testString,true,lineWidth,null);
+        return paint.breakText(testString,true,lineWidth,null);
     }
 
     private void showMessage(String message){
@@ -281,7 +322,7 @@ public class BookPageFactory {
 
     //以下为设置方法
     public void setBook(String book){
-        setBook(book,0);
+        setBook(book,-1);
     }
     public void setBook(String book,int readAddress){
         setBook(book,readAddress,null,null,null);
@@ -317,5 +358,9 @@ public class BookPageFactory {
 
     public void setReadAddress(int readAddress) {
         this.readAddress = readAddress;
+    }
+
+    public void setCoverImage(Bitmap coverImage) {
+        this.coverImage = coverImage;
     }
 }

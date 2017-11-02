@@ -19,6 +19,7 @@ import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.NotificationCompat;
 import android.support.v4.app.ShareCompat;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.graphics.Palette;
 import android.util.Log;
 import android.view.Display;
 import android.view.LayoutInflater;
@@ -30,6 +31,8 @@ import android.widget.LinearLayout;
 import android.widget.SeekBar;
 import android.widget.Toast;
 
+import com.android.volley.VolleyError;
+import com.android.volley.toolbox.ImageLoader;
 import com.example.xyzreader.R;
 import com.example.xyzreader.data.ArticleLoader;
 import com.example.xyzreader.data.ItemsContract;
@@ -150,10 +153,27 @@ public class ReaderActivity extends AppCompatActivity implements LoaderManager.L
             mCursor = null;
         }
         if(mCursor!=null){
-            Log.i(TAG,"mCursor:"+mCursor.getString(ArticleLoader.Query.BODY));
-            bookPageFactory.setBook(mCursor.getString(ArticleLoader.Query.BODY),
+            bookPageFactory.setBook(
+                    mCursor.getString(ArticleLoader.Query.BODY),
                     getReadAddress(mCursor.getString(ArticleLoader.Query.TITLE)),
-                    ArticleLoader.Query.PHOTO_URL);
+                    null,
+                    mCursor.getString(ArticleLoader.Query.TITLE),
+                    mCursor.getString(ArticleLoader.Query.PUBLISHED_DATE));
+            ImageLoaderHelper.getInstance(getBaseContext()).getImageLoader()
+                    .get(mCursor.getString(ArticleLoader.Query.PHOTO_URL), new ImageLoader.ImageListener() {
+                        @Override
+                        public void onResponse(ImageLoader.ImageContainer imageContainer, boolean b) {
+                            Bitmap bitmap = imageContainer.getBitmap();
+                            if (bitmap != null) {
+                                bookPageFactory.setCoverImage(bitmap);
+                            }
+                        }
+
+                        @Override
+                        public void onErrorResponse(VolleyError volleyError) {
+
+                        }
+                    });
             bookPageFactory.onDraw(mCurPageCanvas);
 
             share.setOnClickListener(new View.OnClickListener() {
@@ -183,7 +203,7 @@ public class ReaderActivity extends AppCompatActivity implements LoaderManager.L
 
     private int getReadAddress(String title){
         SharedPreferences sharedPreferences=getSharedPreferences("ReadAddress",MODE_PRIVATE);
-        return sharedPreferences.getInt(title,0);
+        return sharedPreferences.getInt(title,-1);
     }
     private void setReadAddress(String title,int readAddress){
         SharedPreferences.Editor editor=getSharedPreferences("ReadAddress",MODE_PRIVATE).edit();
