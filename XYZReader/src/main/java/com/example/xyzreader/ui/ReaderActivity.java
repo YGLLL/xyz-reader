@@ -13,6 +13,7 @@ import android.graphics.Paint;
 import android.graphics.Point;
 import android.graphics.Typeface;
 import android.graphics.drawable.Drawable;
+import android.net.ParseException;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.design.widget.FloatingActionButton;
@@ -20,6 +21,8 @@ import android.support.v4.app.NotificationCompat;
 import android.support.v4.app.ShareCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.graphics.Palette;
+import android.text.Html;
+import android.text.format.DateUtils;
 import android.util.Log;
 import android.view.Display;
 import android.view.LayoutInflater;
@@ -40,6 +43,8 @@ import com.example.xyzreader.ui.view.PageView;
 import com.example.xyzreader.util.BookPageFactory;
 
 import java.io.IOException;
+import java.util.Date;
+import java.util.GregorianCalendar;
 
 /**
  * Created by YGL on 2017/10/4.
@@ -58,7 +63,8 @@ public class ReaderActivity extends AppCompatActivity implements LoaderManager.L
     private BookPageFactory bookPageFactory;
     private LinearLayout control;
     private SeekBar seekBar;
-    FloatingActionButton share;
+    private FloatingActionButton share;
+    private GregorianCalendar START_OF_EPOCH = new GregorianCalendar(2,1,1);
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -153,6 +159,7 @@ public class ReaderActivity extends AppCompatActivity implements LoaderManager.L
             mCursor = null;
         }
         if(mCursor!=null){
+            String publishedDate=getPublishedDate(mCursor);
             bookPageFactory.setBook(
                     mCursor.getString(ArticleLoader.Query.BODY),
                     getReadAddress(mCursor.getString(ArticleLoader.Query.TITLE)),
@@ -193,6 +200,30 @@ public class ReaderActivity extends AppCompatActivity implements LoaderManager.L
                     }
                 }
             });
+        }
+    }
+
+    private String getPublishedDate(Cursor cursor){
+        Date publishedDate = parsePublishedDate(cursor);
+        if (!publishedDate.before(START_OF_EPOCH.getTime())) {
+            return DateUtils.getRelativeTimeSpanString(publishedDate.getTime(), System.currentTimeMillis(), DateUtils.HOUR_IN_MILLIS, DateUtils.FORMAT_ABBREV_ALL).toString()
+                    + " by "
+                    + mCursor.getString(ArticleLoader.Query.AUTHOR);
+        } else {
+            // If date is before 1902, just show the string
+            return outputFormat.format(publishedDate)
+                    + " by "
+                    + mCursor.getString(ArticleLoader.Query.AUTHOR);
+        }
+    }
+    private Date parsePublishedDate(Cursor c) {
+        try {
+            String date = c.getString(ArticleLoader.Query.PUBLISHED_DATE);
+            return dateFormat.parse(date);
+        } catch (ParseException ex) {
+            Log.e(TAG, ex.getMessage());
+            Log.i(TAG, "passing today's date");
+            return new Date();
         }
     }
 
