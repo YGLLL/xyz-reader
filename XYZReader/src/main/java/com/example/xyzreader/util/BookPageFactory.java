@@ -6,6 +6,8 @@ import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
+import android.graphics.Rect;
+import android.graphics.RectF;
 import android.graphics.Region;
 import android.graphics.Typeface;
 import android.text.TextUtils;
@@ -88,37 +90,66 @@ public class BookPageFactory {
     public void onDraw(Canvas c) {
         c.drawColor(backColor);
 
-        if(readAddress<0&&(coverImage!=null||title!=null||subTitle!=null)){
+        if(readAddress<0){
             //画封面
-            int marginTop=(screenHeight-screenWidth-textSize*3-marginLine*2)/2;
+            //封面专用画笔
+            Paint coverPaint=new Paint();
+            coverPaint.setColor(mContext.getResources().getColor(R.color.Black));
+            int titleSize=textSize*6/5;
+            coverPaint.setTextSize(titleSize);
+            coverPaint.setTypeface(textTypeface);
+            int marginTop=(screenHeight-(screenWidth+titleSize*2+textSize*2+marginLine*4))/2;
             //画封面图片
-            if(coverImage!=null){
-                c.drawBitmap(coverImage,0,marginTop,p);
-            }else {
-                c.drawBitmap(BitmapFactory.decodeResource(mContext.getResources(),R.drawable.empty_detail),0,marginTop,p);
+            if(coverImage==null){
+                //设置默认图片
+                coverImage=BitmapFactory.decodeResource(mContext.getResources(),R.drawable.empty_detail);
             }
-            //画标题
-            int lineX=marginWidth;
-            int lineY=marginTop+screenWidth+marginLine;
-            if(!TextUtils.isEmpty(title)){
-                //标题专用画笔
-                Paint titlePaint=new Paint();
-                titlePaint.setColor(mContext.getResources().getColor(R.color.Black));
-                int titleSize=textSize*6/5;
-                titlePaint.setTextSize(titleSize);
-                titlePaint.setTypeface(textTypeface);
-                List<String> list=getLineString(titlePaint,title);
-                for (String line: list){
-                    c.drawText(line,lineX,lineY,titlePaint);
-                    lineY+=titleSize+marginLine;
+            int iWidth=coverImage.getWidth();
+            int iHeight=coverImage.getHeight();
+            Rect r=new Rect();
+            Rect rr=new Rect();
+            if(iWidth>=iHeight){
+                //横向图片
+                r.set((iWidth-iHeight)/2,0,iHeight+(iWidth-iHeight)/2,iHeight);
+                rr.set(0,marginTop,screenWidth,screenWidth+marginTop);
+            }else {
+                //纵向图片
+                if((iHeight/iWidth)>(screenHeight/screenWidth)){
+                    int ih=iWidth*screenHeight/screenWidth;
+                    r.set(0,(iHeight-ih)/2,iWidth,ih+(iHeight-ih)/2);
+                    rr.set(0,0,screenWidth,screenHeight);
+                }else {
+                    int iw=iHeight*screenWidth/screenHeight;
+                    r.set((iWidth-iw)/2,0,iw+(iWidth-iw)/2,iHeight);
+                    rr.set(0,0,screenWidth,screenHeight);
                 }
             }
+            c.drawBitmap(coverImage,r,rr,coverPaint);
+            //画标题
+            Paint wordBackground =new Paint();
+            wordBackground.setColor(mContext.getResources().getColor(R.color.Gray));
+            Rect titleRect=new Rect();
+            int lineX=marginWidth;
+            int lineY=marginTop+screenWidth;
+            if(!TextUtils.isEmpty(title)){
+                List<String> list=getLineString(coverPaint,title);
+                for (String line: list){
+                    lineY+=(titleSize+marginLine);
+                    titleRect.set(0,lineY-titleSize,screenWidth,lineY+marginLine);
+                    c.drawRect(titleRect,wordBackground);
+                    c.drawText(line,lineX,lineY,coverPaint);
+                }
+            }
+            coverPaint.setColor(textColor);
+            coverPaint.setTextSize(textSize);
             //画副标题
             if(!TextUtils.isEmpty(subTitle)){
-                List<String> list=getLineString(p,subTitle);
+                List<String> list=getLineString(coverPaint,subTitle);
                 for (String line: list){
-                    c.drawText(line,lineX,lineY,p);
-                    lineY+=textSize+marginLine;
+                    lineY+=(textSize+marginLine);
+                    titleRect.set(0,lineY-textSize,screenWidth,lineY+marginLine);
+                    c.drawRect(titleRect,wordBackground);
+                    c.drawText(line,lineX,lineY,coverPaint);
                 }
             }
         }else {
@@ -154,6 +185,7 @@ public class BookPageFactory {
                     b=word.lastIndexOf(" ",a);
                     if (b!=-1&&isMultipleString(word.substring(0,a))){
                         //如果有空格
+                        b+=1;
                     }else {
                         //既没有转行符，也没有空格
                         b=a;
@@ -170,24 +202,24 @@ public class BookPageFactory {
         List<String> list=new ArrayList<>();
         if(!TextUtils.isEmpty(string)){
             int address=0;
-            while (address!=string.length()){
-                String word=string.substring(address,
-                        (address+oneLineCharacterQuantity(paint)*2)>string.length()?string.length():(address+oneLineCharacterQuantity(paint)*2));
-                int a=paint.breakText(word,true,lineWidth,null);//自动折行
-                int b=word.indexOf("\n");
+            while (address<string.length()){
+                string=string.substring(address,string.length());
+                int a=paint.breakText(string,true,lineWidth,null);//自动折行
+                int b=string.indexOf("\n");
                 if(b!=-1&&b<=a){
                     //如果有转行符
                     b+=1;
                 }else {
-                    b=word.lastIndexOf(" ",a);
-                    if (b!=-1&&isMultipleString(word.substring(0,a))){
+                    b=string.lastIndexOf(" ",a);
+                    if (b!=-1&&isMultipleString(string.substring(0,a))&&a<string.length()){
                         //如果有空格
+                        b+=1;
                     }else {
                         //既没有转行符，也没有空格
                         b=a;
                     }
                 }
-                list.add(word.substring(0,b));
+                list.add(string.substring(0,b));
                 address+=b;
             }
         }
@@ -197,7 +229,7 @@ public class BookPageFactory {
     //翻到上一页
     public void prePage(){
         if (readAddress<=-1){
-            showMessage("已经是第一页");
+            showMessage("已经到达第一页");
             return;
         }
         readAddress=prePageAddress(readAddress);
@@ -206,7 +238,7 @@ public class BookPageFactory {
     //翻到下一页
     public void nextPage(){
         if (readAddress>=book.length()){
-            showMessage("已经是最后一页");
+            showMessage("已经到达最后一页");
             return;
         }
         readAddress=nextPageAddress(readAddress);

@@ -13,7 +13,6 @@ import android.graphics.Paint;
 import android.graphics.Point;
 import android.graphics.Typeface;
 import android.graphics.drawable.Drawable;
-import android.net.ParseException;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.design.widget.FloatingActionButton;
@@ -43,6 +42,8 @@ import com.example.xyzreader.ui.view.PageView;
 import com.example.xyzreader.util.BookPageFactory;
 
 import java.io.IOException;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.GregorianCalendar;
 
@@ -165,7 +166,7 @@ public class ReaderActivity extends AppCompatActivity implements LoaderManager.L
                     getReadAddress(mCursor.getString(ArticleLoader.Query.TITLE)),
                     null,
                     mCursor.getString(ArticleLoader.Query.TITLE),
-                    mCursor.getString(ArticleLoader.Query.PUBLISHED_DATE));
+                    publishedDate);
             ImageLoaderHelper.getInstance(getBaseContext()).getImageLoader()
                     .get(mCursor.getString(ArticleLoader.Query.PHOTO_URL), new ImageLoader.ImageListener() {
                         @Override
@@ -211,7 +212,7 @@ public class ReaderActivity extends AppCompatActivity implements LoaderManager.L
                     + mCursor.getString(ArticleLoader.Query.AUTHOR);
         } else {
             // If date is before 1902, just show the string
-            return outputFormat.format(publishedDate)
+            return new SimpleDateFormat().format(publishedDate)
                     + " by "
                     + mCursor.getString(ArticleLoader.Query.AUTHOR);
         }
@@ -219,7 +220,7 @@ public class ReaderActivity extends AppCompatActivity implements LoaderManager.L
     private Date parsePublishedDate(Cursor c) {
         try {
             String date = c.getString(ArticleLoader.Query.PUBLISHED_DATE);
-            return dateFormat.parse(date);
+            return new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.sss").parse(date);
         } catch (ParseException ex) {
             Log.e(TAG, ex.getMessage());
             Log.i(TAG, "passing today's date");

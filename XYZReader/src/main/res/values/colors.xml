@@ -28,4 +28,5 @@
     <color name="colorPrimary">#FF4500</color>
     <color name="colorPrimaryDark">#FF4500</color>
     <color name="colorAccent">#3F51B5</color>
+    <color name="Gray">#F0F0F0F0</color>
 </resources>

@@ -31,11 +31,9 @@
         <android.support.v7.widget.Toolbar
             android:id="@+id/toolbar"
             app:theme="@style/ThemeOverlay.AppCompat.Dark.ActionBar"
-            android:paddingBottom="@dimen/toolbar_image_paddingBottom"
             android:layout_width="match_parent"
-            android:layout_height="112dp"
-            app:layout_scrollFlags="scroll|enterAlways|snap"
-            android:gravity="bottom">
+            android:layout_height="wrap_content"
+            app:layout_scrollFlags="scroll|enterAlways|snap">
 
             <ImageView
                 android:layout_width="wrap_content"
