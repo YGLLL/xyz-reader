@@ -15,4 +15,5 @@
     <dimen name="reading_default_text_size">20sp</dimen>
 
     <dimen name="toolbar_image_paddingBottom">10dp</dimen>
+    <dimen name="exit_buttom_size">50dp</dimen>
 </resources>

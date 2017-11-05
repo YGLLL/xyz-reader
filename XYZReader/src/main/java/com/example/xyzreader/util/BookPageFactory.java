@@ -71,8 +71,8 @@ public class BookPageFactory {
         marginWidth=(int) mContext.getResources().getDimension(R.dimen.width_margin);
         marginHeight=(int) mContext.getResources().getDimension(R.dimen.heigth_margin);
         marginLine=(int) mContext.getResources().getDimension(R.dimen.line_margin);
-        backColor = mContext.getResources().getColor(R.color.white);
-        textColor=mContext.getResources().getColor(R.color.DimGray);
+        backColor = mContext.getResources().getColor(R.color.reader_back);
+        textColor=mContext.getResources().getColor(R.color.reader_body);
         //设置画笔
         p=new Paint();
         p.setColor(textColor);
@@ -140,7 +140,7 @@ public class BookPageFactory {
                     c.drawText(line,lineX,lineY,coverPaint);
                 }
             }
-            coverPaint.setColor(textColor);
+            coverPaint.setColor(mContext.getResources().getColor(R.color.MinBlack));
             coverPaint.setTextSize(textSize);
             //画副标题
             if(!TextUtils.isEmpty(subTitle)){

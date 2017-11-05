@@ -7,6 +7,7 @@ import java.net.URL;
 
 public class Config {
     public static final URL BASE_URL;
+    public static final String APP_LOCATION;
     private static String TAG = Config.class.toString();
 
     static {
@@ -22,5 +23,6 @@ public class Config {
         }
 
         BASE_URL = url;
+        APP_LOCATION="https://github.com/YGLLL/xyz-reader";
     }
 }

@@ -6,27 +6,39 @@
     android:layout_height="match_parent"
     android:id="@+id/content_layout">
 
-    <LinearLayout
+    <FrameLayout
         android:id="@+id/control"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:orientation="vertical"
-        android:gravity="bottom"
-        android:background="#50000000"
+        android:background="@color/little_black"
         android:elevation="1dp">
 
-        <android.support.design.widget.FloatingActionButton
-            android:id="@+id/share"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            app:srcCompat="@drawable/ic_share"
-            android:layout_gravity="end"
-            app:elevation="10dp"/>
-        <SeekBar
+        <ImageButton
+            android:id="@+id/exit"
+            android:layout_width="@dimen/exit_buttom_size"
+            android:layout_height="@dimen/exit_buttom_size"
+            android:background="@color/Transparent"
+            app:srcCompat="@drawable/ic_arrow_back"
+            android:scaleType="fitStart" />
+
+        <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:id="@+id/seekBar"
-            android:background="@color/Black"
-            app:elevation="10dp"/>
-    </LinearLayout>
+            android:layout_height="match_parent"
+            android:orientation="vertical"
+            android:gravity="bottom">
+            <android.support.design.widget.FloatingActionButton
+                android:id="@+id/share"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                app:srcCompat="@drawable/ic_share"
+                android:layout_gravity="end"
+                app:elevation="10dp"/>
+            <SeekBar
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:id="@+id/seekBar"
+                android:background="@color/Black"
+                android:elevation="10dp"/>
+        </LinearLayout>
+    </FrameLayout>
 </FrameLayout>

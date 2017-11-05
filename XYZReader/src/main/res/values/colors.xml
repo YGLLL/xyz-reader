@@ -24,9 +24,15 @@
 
     <color name="DimGray">#696969</color>
     <color name="Black">#000000</color>
+    <color name="MinBlack">#404040</color>
     <color name="white">#FFFFFF</color>
     <color name="colorPrimary">#FF4500</color>
     <color name="colorPrimaryDark">#FF4500</color>
-    <color name="colorAccent">#3F51B5</color>
+    <color name="colorAccent">#FF6500</color>
     <color name="Gray">#F0F0F0F0</color>
+    <color name="Transparent">#00000000</color>
+    <color name="little_black">#50000000</color>
+    <color name="reader_back">#F0F0F0</color>
+    <color name="reader_body">#303030</color>
+    <color name="subtitle">#6000</color>
 </resources>

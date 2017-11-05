@@ -29,6 +29,7 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.view.WindowManager;
 import android.widget.FrameLayout;
+import android.widget.ImageButton;
 import android.widget.LinearLayout;
 import android.widget.SeekBar;
 import android.widget.Toast;
@@ -38,6 +39,7 @@ import com.android.volley.toolbox.ImageLoader;
 import com.example.xyzreader.R;
 import com.example.xyzreader.data.ArticleLoader;
 import com.example.xyzreader.data.ItemsContract;
+import com.example.xyzreader.remote.Config;
 import com.example.xyzreader.ui.view.PageView;
 import com.example.xyzreader.util.BookPageFactory;
 
@@ -62,7 +64,8 @@ public class ReaderActivity extends AppCompatActivity implements LoaderManager.L
     private long mItemId;//文章ID
     private Cursor mCursor;
     private BookPageFactory bookPageFactory;
-    private LinearLayout control;
+    private FrameLayout control;
+    private ImageButton exit;
     private SeekBar seekBar;
     private FloatingActionButton share;
     private GregorianCalendar START_OF_EPOCH = new GregorianCalendar(2,1,1);
@@ -99,9 +102,33 @@ public class ReaderActivity extends AppCompatActivity implements LoaderManager.L
         contentLayout.addView(mPageView);
         seekBar=(SeekBar)findViewById(R.id.seekBar);
         seekBar.setOnSeekBarChangeListener(this);
-        control=(LinearLayout)findViewById(R.id.control);
+        control=(FrameLayout)findViewById(R.id.control);
         control.setVisibility(View.GONE);
         share =(FloatingActionButton)findViewById(R.id.share);
+        share.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent intent=new Intent(Intent.ACTION_SEND);
+                intent.setType("text/plain");
+                intent.putExtra(Intent.EXTRA_TEXT, Config.APP_LOCATION);
+                Intent chooserIntent=Intent.createChooser(intent,getResources().getString(R.string.share_title));
+                if (chooserIntent == null) {
+                    return;
+                }
+                try {
+                    startActivity(chooserIntent);
+                } catch (android.content.ActivityNotFoundException ex) {
+                    Toast.makeText(getBaseContext(), "Can't find share component to share", Toast.LENGTH_SHORT).show();
+                }
+            }
+        });
+        exit=(ImageButton)findViewById(R.id.exit);
+        exit.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                finish();
+            }
+        });
 
         bookPageFactory=new BookPageFactory(getBaseContext(),screenWidth,screenHeight);
         bookPageFactory.onDraw(mCurPageCanvas);
@@ -119,13 +146,7 @@ public class ReaderActivity extends AppCompatActivity implements LoaderManager.L
 
                         int x = (int) e.getX();
                         int y = (int) e.getY();
-                        if(x>screenWidth/3&&x<screenWidth*2/3){//显示控制菜单
-                            if(control.getVisibility()==View.GONE){
-                                control.setVisibility(View.VISIBLE);
-                                seekBar.setProgress((int)((bookPageFactory.getReadAddress()*100.0)/bookPageFactory.getBookLength()));
-                            }else {
-                                control.setVisibility(View.GONE);
-                            }
+                        if(showOrHideControl(x,y)){//控制控制菜单
                             return false;
                         }
                         if (x < screenWidth / 2) {// 向前翻
@@ -144,6 +165,22 @@ public class ReaderActivity extends AppCompatActivity implements LoaderManager.L
                 return false;
             }
         });
+    }
+
+    private Boolean showOrHideControl(int x,int y){
+        if(control.getVisibility()==View.GONE){
+            if((x>screenWidth/3&&x<screenWidth*2/3)&&(y>screenHeight/3&&y<screenHeight*2/3)){
+                control.setVisibility(View.VISIBLE);
+                seekBar.setProgress((int)((bookPageFactory.getReadAddress()*100.0)/bookPageFactory.getBookLength()));
+            }else {
+                return false;
+            }
+        }else {
+            if(y>exit.getHeight()&&y<(screenHeight-share.getHeight()-seekBar.getHeight())){
+                control.setVisibility(View.GONE);
+            }
+        }
+        return true;
     }
 
     @Override
@@ -183,24 +220,6 @@ public class ReaderActivity extends AppCompatActivity implements LoaderManager.L
                         }
                     });
             bookPageFactory.onDraw(mCurPageCanvas);
-
-            share.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    Intent intent=new Intent(Intent.ACTION_SEND);
-                    intent.setType("text/plain");
-                    intent.putExtra(Intent.EXTRA_TEXT, mCursor.getString(ArticleLoader.Query.BODY));
-                    Intent chooserIntent=Intent.createChooser(intent,getResources().getString(R.string.share_title));
-                    if (chooserIntent == null) {
-                        return;
-                    }
-                    try {
-                        startActivity(chooserIntent);
-                    } catch (android.content.ActivityNotFoundException ex) {
-                        Toast.makeText(getBaseContext(), "Can't find share component to share", Toast.LENGTH_SHORT).show();
-                    }
-                }
-            });
         }
     }
 
