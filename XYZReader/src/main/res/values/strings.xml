@@ -9,4 +9,6 @@
 
     <string name="up">Up</string>
     <string name="share_title">分享文章</string>
+    <string name="first_page_toast">已到达第一页</string>
+    <string name="last_page_toast">已到达最后一页</string>
 </resources>

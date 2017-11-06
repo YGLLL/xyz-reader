@@ -11,8 +11,9 @@
     <!--BookPageFactory-->
     <dimen name="line_margin">10dp</dimen>
     <dimen name="width_margin">10dp</dimen>
-    <dimen name="heigth_margin">10dp</dimen>
-    <dimen name="reading_default_text_size">20sp</dimen>
+    <dimen name="reading_body_size">23sp</dimen>
+    <dimen name="percent">22dp</dimen>
+    <dimen name="percent_size">18dp</dimen>
 
     <dimen name="toolbar_image_paddingBottom">10dp</dimen>
     <dimen name="exit_buttom_size">50dp</dimen>

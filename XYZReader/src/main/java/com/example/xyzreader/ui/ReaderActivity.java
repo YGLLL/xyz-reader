@@ -18,13 +18,16 @@ import android.support.annotation.Nullable;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.NotificationCompat;
 import android.support.v4.app.ShareCompat;
+import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.graphics.Palette;
+import android.support.v7.widget.Toolbar;
 import android.text.Html;
 import android.text.format.DateUtils;
 import android.util.Log;
 import android.view.Display;
 import android.view.LayoutInflater;
+import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.WindowManager;
@@ -65,7 +68,7 @@ public class ReaderActivity extends AppCompatActivity implements LoaderManager.L
     private Cursor mCursor;
     private BookPageFactory bookPageFactory;
     private FrameLayout control;
-    private ImageButton exit;
+    //private ImageButton exit;
     private SeekBar seekBar;
     private FloatingActionButton share;
     private GregorianCalendar START_OF_EPOCH = new GregorianCalendar(2,1,1);
@@ -100,6 +103,13 @@ public class ReaderActivity extends AppCompatActivity implements LoaderManager.L
         mPageView = new PageView(this, screenWidth, readHeight);
         FrameLayout contentLayout=(FrameLayout) findViewById(R.id.content_layout);
         contentLayout.addView(mPageView);
+        Toolbar toolbar=(Toolbar)findViewById(R.id.toolbar);
+        setSupportActionBar(toolbar);
+        ActionBar actionBar=getSupportActionBar();
+        if(actionBar!=null){
+            actionBar.setDisplayHomeAsUpEnabled(true);
+            actionBar.setDisplayShowTitleEnabled(false);
+        }
         seekBar=(SeekBar)findViewById(R.id.seekBar);
         seekBar.setOnSeekBarChangeListener(this);
         control=(FrameLayout)findViewById(R.id.control);
@@ -122,6 +132,7 @@ public class ReaderActivity extends AppCompatActivity implements LoaderManager.L
                 }
             }
         });
+        /*
         exit=(ImageButton)findViewById(R.id.exit);
         exit.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -129,6 +140,7 @@ public class ReaderActivity extends AppCompatActivity implements LoaderManager.L
                 finish();
             }
         });
+        */
 
         bookPageFactory=new BookPageFactory(getBaseContext(),screenWidth,screenHeight);
         bookPageFactory.onDraw(mCurPageCanvas);
@@ -170,17 +182,27 @@ public class ReaderActivity extends AppCompatActivity implements LoaderManager.L
     private Boolean showOrHideControl(int x,int y){
         if(control.getVisibility()==View.GONE){
             if((x>screenWidth/3&&x<screenWidth*2/3)&&(y>screenHeight/3&&y<screenHeight*2/3)){
+                showSystemUI();
                 control.setVisibility(View.VISIBLE);
                 seekBar.setProgress((int)((bookPageFactory.getReadAddress()*100.0)/bookPageFactory.getBookLength()));
             }else {
                 return false;
             }
         }else {
-            if(y>exit.getHeight()&&y<(screenHeight-share.getHeight()-seekBar.getHeight())){
-                control.setVisibility(View.GONE);
-            }
+            hideSystemUI();
+            control.setVisibility(View.GONE);
         }
         return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item){
+        switch (item.getItemId()){
+            case android.R.id.home:
+                finish();
+                return true;
+        }
+        return super.onOptionsItemSelected(item);
     }
 
     @Override
@@ -269,6 +291,12 @@ public class ReaderActivity extends AppCompatActivity implements LoaderManager.L
     }
 
     @Override
+    protected void onStart(){
+        super.onStart();
+        hideSystemUI();
+    }
+
+    @Override
     protected void onDestroy() {
         super.onDestroy();
         if(mCursor!=null){
@@ -323,7 +351,7 @@ public class ReaderActivity extends AppCompatActivity implements LoaderManager.L
     @Override
     public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
         Log.i(TAG,"onProgressChanged progress"+progress);
-        address=bookPageFactory.getBookLength()*progress/100;
+        address=(bookPageFactory.getBookLength()*progress/100)-1;//-1是为了取得-1，-1是封面位置
     }
 
     @Override

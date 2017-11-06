@@ -36,6 +36,8 @@ public class BookPageFactory {
     private int screenHeight;
 
     private Paint p;
+    private Paint percentPaint;
+    private Paint coverPaint;
 
     private String book;
     private List<String> pageString;
@@ -45,10 +47,10 @@ public class BookPageFactory {
     private Typeface textTypeface;
 
     private int marginWidth;
-    private int marginHeight;
     private int marginLine;
     private int maxLine;
     private int lineWidth;
+    private int percentSize;
 
     private int backColor;
 
@@ -69,21 +71,26 @@ public class BookPageFactory {
 
         //读取默认配置
         marginWidth=(int) mContext.getResources().getDimension(R.dimen.width_margin);
-        marginHeight=(int) mContext.getResources().getDimension(R.dimen.heigth_margin);
         marginLine=(int) mContext.getResources().getDimension(R.dimen.line_margin);
         backColor = mContext.getResources().getColor(R.color.reader_back);
         textColor=mContext.getResources().getColor(R.color.reader_body);
+        percentSize=(int)mContext.getResources().getDimension(R.dimen.percent_size);
         //设置画笔
         p=new Paint();
         p.setColor(textColor);
-        textSize=(int) mContext.getResources().getDimension(R.dimen.reading_default_text_size);
+        textSize=(int) mContext.getResources().getDimension(R.dimen.reading_body_size);
         p.setTextSize(textSize);
-        textTypeface=Typeface.createFromAsset(mContext.getAssets(), "font/QH.ttf");
+        textTypeface=Typeface.createFromAsset(mContext.getAssets(), "9t.ttf");
         p.setTypeface(textTypeface);
-        //计算屏幕可以容纳文字的行数
-        maxLine=(screenHeight-marginHeight*2)/(textSize+marginLine)-1;//使用一行显示进度
+        coverPaint=new Paint();
+        percentPaint=new Paint();
+        percentPaint.setTextSize(percentSize);
+        percentPaint.setColor(textColor);
+        //计算屏幕可以显示文字的行数
+        maxLine=screenHeight/(marginLine+textSize)-1;//减去的一行用于显示阅读进度
         //计算一行的长度
         lineWidth=screenWidth-marginWidth*2;
+
         df = new DecimalFormat("#0.0");
     }
 
@@ -92,8 +99,7 @@ public class BookPageFactory {
 
         if(readAddress<0){
             //画封面
-            //封面专用画笔
-            Paint coverPaint=new Paint();
+            //设置封面专用画笔
             coverPaint.setColor(mContext.getResources().getColor(R.color.Black));
             int titleSize=textSize*6/5;
             coverPaint.setTextSize(titleSize);
@@ -141,7 +147,7 @@ public class BookPageFactory {
                 }
             }
             coverPaint.setColor(mContext.getResources().getColor(R.color.MinBlack));
-            coverPaint.setTextSize(textSize);
+            coverPaint.setTextSize(textSize*4/5);
             //画副标题
             if(!TextUtils.isEmpty(subTitle)){
                 List<String> list=getLineString(coverPaint,subTitle);
@@ -156,16 +162,17 @@ public class BookPageFactory {
             //画文字
             pageString=getPageString(readAddress);
             int lineX=marginWidth;
-            int lineY=marginHeight+textSize;
+            int lineY=0;
             for (String line: pageString){
+                lineY+=marginLine+textSize;
                 c.drawText(line,lineX,lineY,p);
-                lineY+=textSize+marginLine;
             }
 
             //画进度
             float fPercent = (float) (readAddress * 1.0 / book.length());
             String strPercent = df.format(fPercent * 100) + "%";
-            c.drawText(strPercent,marginWidth,marginHeight+textSize*(maxLine+1)+marginLine*maxLine, p);
+            lineY+=marginLine+textSize;
+            c.drawText(strPercent,marginWidth,lineY, percentPaint);
         }
     }
 
@@ -229,7 +236,7 @@ public class BookPageFactory {
     //翻到上一页
     public void prePage(){
         if (readAddress<=-1){
-            showMessage("已经到达第一页");
+            showMessage(mContext.getResources().getString(R.string.first_page_toast));
             return;
         }
         readAddress=prePageAddress(readAddress);
@@ -238,7 +245,7 @@ public class BookPageFactory {
     //翻到下一页
     public void nextPage(){
         if (readAddress>=book.length()){
-            showMessage("已经到达最后一页");
+            showMessage(mContext.getResources().getString(R.string.last_page_toast));
             return;
         }
         readAddress=nextPageAddress(readAddress);
@@ -367,9 +374,9 @@ public class BookPageFactory {
         this.subTitle=subTitle;
     }
 
-    public void setMargin(int marginX,int marginY){
+    /*
+    public void setMargin(int marginX){
         this.marginWidth=marginX;
-        this.marginHeight=marginY;
     }
 
     public void setBackColor(int backColor){
@@ -387,6 +394,7 @@ public class BookPageFactory {
     public void setTextTypeface(Typeface textTypeface) {
         this.textTypeface = textTypeface;
     }
+    */
 
     public void setReadAddress(int readAddress) {
         this.readAddress = readAddress;
