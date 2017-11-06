@@ -19,6 +19,7 @@ import android.widget.Scroller;
 /**
  * Created by Administrator on 2016/1/3.
  */
+//此部分代码参考自https://github.com/Focfa/Jreader
 public class PageView extends View {
     //阅读界面VIEW
     private int mScreenWidth = 0; // 屏幕宽
