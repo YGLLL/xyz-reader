@@ -15,6 +15,7 @@
     <dimen name="percent">22dp</dimen>
     <dimen name="percent_size">18dp</dimen>
 
-    <dimen name="toolbar_image_paddingBottom">10dp</dimen>
-    <dimen name="exit_buttom_size">50dp</dimen>
+    <dimen name="activity_article_control_views_margin">16dp</dimen>
+    <dimen name="toolbar_height">8dp</dimen>
+    <dimen name="card_margin">4dp</dimen>
 </resources>

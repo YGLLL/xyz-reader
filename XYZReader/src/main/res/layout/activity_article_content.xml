@@ -33,15 +33,14 @@
                 app:srcCompat="@drawable/ic_share"
                 android:layout_gravity="end"
                 app:elevation="10dp"
-                android:layout_margin="16dp"/>
+                android:layout_margin="@dimen/activity_article_control_views_margin"/>
             <SeekBar
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:id="@+id/seekBar"
-                android:elevation="10dp"
-                android:layout_marginTop="16dp"
-                android:layout_marginRight="16dp"
-                android:layout_marginLeft="16dp"
+                android:layout_marginTop="@dimen/activity_article_control_views_margin"
+                android:layout_marginRight="@dimen/activity_article_control_views_margin"
+                android:layout_marginLeft="@dimen/activity_article_control_views_margin"
                 android:layout_marginBottom="50dp"/>
         </LinearLayout>
     </FrameLayout>

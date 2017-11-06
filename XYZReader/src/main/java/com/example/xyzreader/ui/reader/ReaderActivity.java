@@ -1,4 +1,4 @@
-package com.example.xyzreader.ui;
+package com.example.xyzreader.ui.reader;
 
 import android.app.LoaderManager;
 import android.content.Intent;
@@ -7,34 +7,21 @@ import android.content.SharedPreferences;
 import android.content.pm.ActivityInfo;
 import android.database.Cursor;
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
-import android.graphics.Color;
-import android.graphics.Paint;
 import android.graphics.Point;
-import android.graphics.Typeface;
-import android.graphics.drawable.Drawable;
 import android.os.Bundle;
-import android.support.annotation.Nullable;
 import android.support.design.widget.FloatingActionButton;
-import android.support.v4.app.NotificationCompat;
-import android.support.v4.app.ShareCompat;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
-import android.support.v7.graphics.Palette;
 import android.support.v7.widget.Toolbar;
-import android.text.Html;
 import android.text.format.DateUtils;
 import android.util.Log;
 import android.view.Display;
-import android.view.LayoutInflater;
 import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.WindowManager;
 import android.widget.FrameLayout;
-import android.widget.ImageButton;
-import android.widget.LinearLayout;
 import android.widget.SeekBar;
 import android.widget.Toast;
 
@@ -44,10 +31,9 @@ import com.example.xyzreader.R;
 import com.example.xyzreader.data.ArticleLoader;
 import com.example.xyzreader.data.ItemsContract;
 import com.example.xyzreader.remote.Config;
-import com.example.xyzreader.ui.view.PageView;
-import com.example.xyzreader.util.BookPageFactory;
+import com.example.xyzreader.ui.ArticleListActivity;
+import com.example.xyzreader.ui.ImageLoaderHelper;
 
-import java.io.IOException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -174,32 +160,6 @@ public class ReaderActivity extends AppCompatActivity implements LoaderManager.L
         });
     }
 
-    private Boolean showOrHideControl(int x,int y){
-        if(control.getVisibility()==View.GONE){
-            if((x>screenWidth/3&&x<screenWidth*2/3)&&(y>screenHeight/3&&y<screenHeight*2/3)){
-                showSystemUI();
-                control.setVisibility(View.VISIBLE);
-                seekBar.setProgress((int)((bookPageFactory.getReadAddress()*100.0)/bookPageFactory.getBookLength()));
-            }else {
-                return false;
-            }
-        }else {
-            hideSystemUI();
-            control.setVisibility(View.GONE);
-        }
-        return true;
-    }
-
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item){
-        switch (item.getItemId()){
-            case android.R.id.home:
-                finish();
-                return true;
-        }
-        return super.onOptionsItemSelected(item);
-    }
-
     @Override
     public Loader<Cursor> onCreateLoader(int i, Bundle bundle) {
         return ArticleLoader.newInstanceForItemId(getBaseContext(), mItemId);
@@ -240,63 +200,9 @@ public class ReaderActivity extends AppCompatActivity implements LoaderManager.L
         }
     }
 
-    private String getPublishedDate(Cursor cursor){
-        Date publishedDate = parsePublishedDate(cursor);
-        if (!publishedDate.before(START_OF_EPOCH.getTime())) {
-            return DateUtils.getRelativeTimeSpanString(publishedDate.getTime(), System.currentTimeMillis(), DateUtils.HOUR_IN_MILLIS, DateUtils.FORMAT_ABBREV_ALL).toString()
-                    + " by "
-                    + mCursor.getString(ArticleLoader.Query.AUTHOR);
-        } else {
-            // If date is before 1902, just show the string
-            return new SimpleDateFormat().format(publishedDate)
-                    + " by "
-                    + mCursor.getString(ArticleLoader.Query.AUTHOR);
-        }
-    }
-    private Date parsePublishedDate(Cursor c) {
-        try {
-            String date = c.getString(ArticleLoader.Query.PUBLISHED_DATE);
-            return new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.sss").parse(date);
-        } catch (ParseException ex) {
-            Log.e(TAG, ex.getMessage());
-            Log.i(TAG, "passing today's date");
-            return new Date();
-        }
-    }
-
     @Override
     public void onLoaderReset(Loader<Cursor> cursorLoader) {
         mCursor = null;
-    }
-
-    private int getReadAddress(String title){
-        SharedPreferences sharedPreferences=getSharedPreferences("ReadAddress",MODE_PRIVATE);
-        return sharedPreferences.getInt(title,-1);
-    }
-    private void setReadAddress(String title,int readAddress){
-        SharedPreferences.Editor editor=getSharedPreferences("ReadAddress",MODE_PRIVATE).edit();
-        editor.putInt(title,readAddress);
-        editor.commit();
-    }
-
-    @Override
-    protected void onResume(){
-        super.onResume();
-        hideSystemUI();
-    }
-
-    @Override
-    protected void onStart(){
-        super.onStart();
-        hideSystemUI();
-    }
-
-    @Override
-    protected void onDestroy() {
-        super.onDestroy();
-        if(mCursor!=null){
-            setReadAddress(mCursor.getString(ArticleLoader.Query.TITLE),bookPageFactory.getReadAddress());
-        }
     }
 
     /**
@@ -322,6 +228,56 @@ public class ReaderActivity extends AppCompatActivity implements LoaderManager.L
                         | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
                         | View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
         );
+    }
+
+    private Boolean showOrHideControl(int x,int y){
+        if(control.getVisibility()==View.GONE){
+            if((x>screenWidth/3&&x<screenWidth*2/3)&&(y>screenHeight/3&&y<screenHeight*2/3)){
+                showSystemUI();
+                control.setVisibility(View.VISIBLE);
+                seekBar.setProgress((int)((bookPageFactory.getReadAddress()*100.0)/bookPageFactory.getBookLength()));
+            }else {
+                return false;
+            }
+        }else {
+            hideSystemUI();
+            control.setVisibility(View.GONE);
+        }
+        return true;
+    }
+
+    private String getPublishedDate(Cursor cursor){
+        Date publishedDate = parsePublishedDate(cursor);
+        if (!publishedDate.before(START_OF_EPOCH.getTime())) {
+            return DateUtils.getRelativeTimeSpanString(publishedDate.getTime(), System.currentTimeMillis(), DateUtils.HOUR_IN_MILLIS, DateUtils.FORMAT_ABBREV_ALL).toString()
+                    + " by "
+                    + mCursor.getString(ArticleLoader.Query.AUTHOR);
+        } else {
+            // If date is before 1902, just show the string
+            return new SimpleDateFormat().format(publishedDate)
+                    + " by "
+                    + mCursor.getString(ArticleLoader.Query.AUTHOR);
+        }
+    }
+    private Date parsePublishedDate(Cursor c) {
+        try {
+            String date = c.getString(ArticleLoader.Query.PUBLISHED_DATE);
+            return new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.sss").parse(date);
+        } catch (ParseException ex) {
+            Log.e(TAG, ex.getMessage());
+            Log.i(TAG, "passing today's date");
+            return new Date();
+        }
+    }
+
+    private int getReadAddress(String title){
+        SharedPreferences sharedPreferences=getSharedPreferences("ReadAddress",MODE_PRIVATE);
+        return sharedPreferences.getInt(title,-1);
+    }
+    private void setReadAddress(String title,int readAddress){
+        SharedPreferences.Editor editor=getSharedPreferences("ReadAddress",MODE_PRIVATE).edit();
+        editor.putInt(title,readAddress);
+        editor.commit();
     }
 
     private void flipPage(int address){
@@ -361,12 +317,42 @@ public class ReaderActivity extends AppCompatActivity implements LoaderManager.L
     }
 
     @Override
+    public boolean onOptionsItemSelected(MenuItem item){
+        switch (item.getItemId()){
+            case android.R.id.home:
+                finish();
+                return true;
+        }
+        return super.onOptionsItemSelected(item);
+    }
+
+    @Override
     public void onBackPressed() {
         if(control.getVisibility()==View.VISIBLE){
             hideSystemUI();
             control.setVisibility(View.GONE);
         }else {
             finish();
+        }
+    }
+
+    @Override
+    protected void onStart(){
+        super.onStart();
+        hideSystemUI();
+    }
+
+    @Override
+    protected void onResume(){
+        super.onResume();
+        hideSystemUI();
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        if(mCursor!=null){
+            setReadAddress(mCursor.getString(ArticleLoader.Query.TITLE),bookPageFactory.getReadAddress());
         }
     }
 }

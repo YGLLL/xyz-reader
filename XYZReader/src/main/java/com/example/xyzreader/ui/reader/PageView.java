@@ -1,4 +1,4 @@
-package com.example.xyzreader.ui.view;
+package com.example.xyzreader.ui.reader;
 
 import android.content.Context;
 import android.graphics.Bitmap;

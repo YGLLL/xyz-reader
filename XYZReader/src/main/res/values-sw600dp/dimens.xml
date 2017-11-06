@@ -4,5 +4,11 @@
     <dimen name="detail_body_text_size">20sp</dimen>
     <item name="detail_body_line_spacing_multiplier" format="float" type="fraction">1.3</item>
     <dimen name="fab_margin">24dp</dimen>
-    <dimen name="exit_buttom_size">100dp</dimen>
+
+    <!--BookPageFactory-->
+    <dimen name="line_margin">20dp</dimen>
+    <dimen name="width_margin">20dp</dimen>
+    <dimen name="reading_body_size">46sp</dimen>
+    <dimen name="percent">44dp</dimen>
+    <dimen name="percent_size">36dp</dimen>
 </resources>
