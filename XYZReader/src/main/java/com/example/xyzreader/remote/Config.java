@@ -23,6 +23,6 @@ public class Config {
         }
 
         BASE_URL = url;
-        APP_LOCATION="https://github.com/YGLLL/xyz-reader";
+        APP_LOCATION="https://raw.githubusercontent.com/YGLLL/xyz-reader/master/apk/XYZReader-debug.apk";
     }
 }
