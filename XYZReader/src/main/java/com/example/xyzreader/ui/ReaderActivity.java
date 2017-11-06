@@ -4,6 +4,7 @@ import android.app.LoaderManager;
 import android.content.Intent;
 import android.content.Loader;
 import android.content.SharedPreferences;
+import android.content.pm.ActivityInfo;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -68,22 +69,25 @@ public class ReaderActivity extends AppCompatActivity implements LoaderManager.L
     private Cursor mCursor;
     private BookPageFactory bookPageFactory;
     private FrameLayout control;
-    //private ImageButton exit;
     private SeekBar seekBar;
     private FloatingActionButton share;
     private GregorianCalendar START_OF_EPOCH = new GregorianCalendar(2,1,1);
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
         setContentView(R.layout.activity_article_content);
         hideSystemUI();
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);//保持屏幕常亮
 
+        String title="";
         if (savedInstanceState == null) {//为什么要判断这个
             if (getIntent() != null && getIntent().getData() != null) {
                 mItemId = ItemsContract.Items.getItemId(getIntent().getData());
+                title=getIntent().getStringExtra(ArticleListActivity.TITLE);
             }
         }
+
         getLoaderManager().initLoader(0, null, this);
 
         //获取屏幕宽高
@@ -108,7 +112,7 @@ public class ReaderActivity extends AppCompatActivity implements LoaderManager.L
         ActionBar actionBar=getSupportActionBar();
         if(actionBar!=null){
             actionBar.setDisplayHomeAsUpEnabled(true);
-            actionBar.setDisplayShowTitleEnabled(false);
+            actionBar.setTitle(title);
         }
         seekBar=(SeekBar)findViewById(R.id.seekBar);
         seekBar.setOnSeekBarChangeListener(this);
@@ -132,15 +136,6 @@ public class ReaderActivity extends AppCompatActivity implements LoaderManager.L
                 }
             }
         });
-        /*
-        exit=(ImageButton)findViewById(R.id.exit);
-        exit.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                finish();
-            }
-        });
-        */
 
         bookPageFactory=new BookPageFactory(getBaseContext(),screenWidth,screenHeight);
         bookPageFactory.onDraw(mCurPageCanvas);
@@ -363,5 +358,15 @@ public class ReaderActivity extends AppCompatActivity implements LoaderManager.L
     public void onStopTrackingTouch(SeekBar seekBar) {
         Log.i(TAG,"onStopTrackingTouch");
         flipPage(address);
+    }
+
+    @Override
+    public void onBackPressed() {
+        if(control.getVisibility()==View.VISIBLE){
+            hideSystemUI();
+            control.setVisibility(View.GONE);
+        }else {
+            finish();
+        }
     }
 }
