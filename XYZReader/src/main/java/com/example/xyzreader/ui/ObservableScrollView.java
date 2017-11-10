@@ -27,6 +27,7 @@ import android.widget.ScrollView;
  */
 public class ObservableScrollView extends ScrollView {
     private Callbacks mCallbacks;
+    private ScrolledToBottomCallbacks scrolledToBottomCallbacks;
 
     public ObservableScrollView(Context context, AttributeSet attrs) {
         super(context, attrs);
@@ -37,6 +38,10 @@ public class ObservableScrollView extends ScrollView {
         super.onScrollChanged(l, t, oldl, oldt);
         if (mCallbacks != null) {
             mCallbacks.onScrollChanged();
+        }
+        int schedule=getScrollY()+getHeight()-getPaddingTop()-getPaddingBottom();
+        if((schedule==getChildAt(0).getHeight())&&scrolledToBottomCallbacks!=null){
+            scrolledToBottomCallbacks.onScrolledToBottom();
         }
     }
 
@@ -58,8 +63,14 @@ public class ObservableScrollView extends ScrollView {
     public void setCallbacks(Callbacks listener) {
         mCallbacks = listener;
     }
+    public void setScrolledToBottomCallbacks(ScrolledToBottomCallbacks s){
+        scrolledToBottomCallbacks=s;
+    }
 
     public static interface Callbacks {
         public void onScrollChanged();
+    }
+    public interface ScrolledToBottomCallbacks{
+        public void onScrolledToBottom();
     }
 }

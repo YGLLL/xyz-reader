@@ -15,11 +15,17 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.GregorianCalendar;
+import java.util.Timer;
+import java.util.TimerTask;
 
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Message;
+import android.support.v4.app.NotificationCompat;
 import android.support.v4.app.ShareCompat;
 import android.support.v7.graphics.Palette;
 import android.text.Html;
+import android.text.TextUtils;
 import android.text.format.DateUtils;
 import android.text.method.LinkMovementMethod;
 import android.util.Log;
@@ -45,6 +51,7 @@ public class ArticleDetailFragment extends Fragment implements
 
     public static final String ARG_ITEM_ID = "item_id";
     private static final float PARALLAX_FACTOR = 1.25f;
+    public static final int UPDATE_BODY = 1;
 
     private Cursor mCursor;
     private long mItemId;
@@ -60,6 +67,9 @@ public class ArticleDetailFragment extends Fragment implements
     private int mScrollY;
     private boolean mIsCard = false;
     private int mStatusBarFullOpacityBottom;
+    private TextView bodyView;
+    private String bodyString;
+    private Boolean firstAdd=true;
 
     private SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.sss");
     // Use default locale format
@@ -134,6 +144,13 @@ public class ArticleDetailFragment extends Fragment implements
                 updateStatusBar();
             }
         });
+        //分段读取，提高性能
+        mScrollView.setScrolledToBottomCallbacks(new ObservableScrollView.ScrolledToBottomCallbacks() {
+            @Override
+            public void onScrolledToBottom() {
+                addBody();
+            }
+        });
 
         mPhotoView = (ImageView) mRootView.findViewById(R.id.photo);
         mPhotoContainerView = mRootView.findViewById(R.id.photo_container);
@@ -203,10 +220,10 @@ public class ArticleDetailFragment extends Fragment implements
         TextView titleView = (TextView) mRootView.findViewById(R.id.article_title);
         TextView bylineView = (TextView) mRootView.findViewById(R.id.article_byline);
         bylineView.setMovementMethod(new LinkMovementMethod());
-        TextView bodyView = (TextView) mRootView.findViewById(R.id.article_body);
+        bodyView = (TextView) mRootView.findViewById(R.id.article_body);
 
 
-        bodyView.setTypeface(Typeface.createFromAsset(getResources().getAssets(), "Rosario-Regular.ttf"));
+        bodyView.setTypeface(Typeface.createFromAsset(getResources().getAssets(), "9t.ttf"));
 
         if (mCursor != null) {
             mRootView.setAlpha(0);
@@ -232,7 +249,9 @@ public class ArticleDetailFragment extends Fragment implements
                                 + "</font>"));
 
             }
-            bodyView.setText(Html.fromHtml(mCursor.getString(ArticleLoader.Query.BODY).replaceAll("(\r\n|\n)", "<br />")));
+            bodyString=mCursor.getString(ArticleLoader.Query.BODY);
+            //分段读取，提高性能
+            addBody();
             ImageLoaderHelper.getInstance(getActivity()).getImageLoader()
                     .get(mCursor.getString(ArticleLoader.Query.PHOTO_URL), new ImageLoader.ImageListener() {
                         @Override
@@ -254,10 +273,26 @@ public class ArticleDetailFragment extends Fragment implements
                         }
                     });
         } else {
-            mRootView.setVisibility(View.GONE);
+            // TODO: 2017/11/10 升级空白屏内容 
+            //mRootView.setVisibility(View.GONE);
             titleView.setText("N/A");
             bylineView.setText("N/A" );
             bodyView.setText("N/A");
+        }
+    }
+
+    private void addBody(){
+        if(bodyView!=null&& !TextUtils.isEmpty(bodyString)){
+            int i=bodyString.length()>=2000?2000:bodyString.length();
+            if(firstAdd){
+                bodyView.setText(bodyString.substring(0,i));
+                //bodyView.setText(Html.fromHtml(bodyString.substring(0,i).replaceAll("(\r\n|\n)", "<br />")));
+                firstAdd=false;
+            }else {
+                bodyView.append(bodyString.substring(0,i));
+                //bodyView.append(Html.fromHtml(bodyString.substring(0,i).replaceAll("(\r\n|\n)", "<br />")));
+            }
+            bodyString=bodyString.substring(i);
         }
     }
 
