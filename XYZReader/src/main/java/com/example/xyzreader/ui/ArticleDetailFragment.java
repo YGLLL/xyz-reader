@@ -6,6 +6,7 @@ import android.content.Intent;
 import android.content.Loader;
 import android.database.Cursor;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.graphics.Rect;
 import android.graphics.Typeface;
@@ -269,7 +270,9 @@ public class ArticleDetailFragment extends Fragment implements
 
                         @Override
                         public void onErrorResponse(VolleyError volleyError) {
-
+                            //if(mPhotoView!=null){
+                            //    mPhotoView.setImageBitmap(BitmapFactory.decodeResource(getActivityCast().getResources(),R.drawable.error_image));
+                            //}
                         }
                     });
         } else {
