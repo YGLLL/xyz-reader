@@ -4,6 +4,7 @@ import android.app.Fragment;
 import android.app.LoaderManager;
 import android.content.Intent;
 import android.content.Loader;
+import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -40,6 +41,9 @@ import com.android.volley.VolleyError;
 import com.android.volley.toolbox.ImageLoader;
 import com.example.xyzreader.R;
 import com.example.xyzreader.data.ArticleLoader;
+import com.example.xyzreader.data.ItemsContract;
+
+import static android.content.Context.MODE_PRIVATE;
 
 /**
  * A fragment representing a single Article detail screen. This fragment is
@@ -47,7 +51,7 @@ import com.example.xyzreader.data.ArticleLoader;
  * tablets) or a {@link ArticleDetailActivity} on handsets.
  */
 public class ArticleDetailFragment extends Fragment implements
-        LoaderManager.LoaderCallbacks<Cursor> {
+        LoaderManager.LoaderCallbacks<Cursor>{
     private static final String TAG = "ArticleDetailFragment";
 
     public static final String ARG_ITEM_ID = "item_id";
@@ -113,6 +117,7 @@ public class ArticleDetailFragment extends Fragment implements
 
     @Override
     public void onActivityCreated(Bundle savedInstanceState) {
+        Log.i(TAG,"onActivityCreated"+mItemId);
         super.onActivityCreated(savedInstanceState);
 
         // In support library r8, calling initLoader for a fragment in a FragmentPagerAdapter in
@@ -207,8 +212,6 @@ public class ArticleDetailFragment extends Fragment implements
             String date = mCursor.getString(ArticleLoader.Query.PUBLISHED_DATE);
             return dateFormat.parse(date);
         } catch (ParseException ex) {
-            Log.e(TAG, ex.getMessage());
-            Log.i(TAG, "passing today's date");
             return new Date();
         }
     }

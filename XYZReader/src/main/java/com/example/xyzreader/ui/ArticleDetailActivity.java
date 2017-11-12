@@ -63,6 +63,7 @@ public class ArticleDetailActivity extends ActionBarActivity
         mPager.setOnPageChangeListener(new ViewPager.SimpleOnPageChangeListener() {
             @Override
             public void onPageScrollStateChanged(int state) {
+                Log.i(TAG,"OnPageChangeListener    onPageScrollStateChanged");
                 super.onPageScrollStateChanged(state);
                 mUpButton.animate()
                         .alpha((state == ViewPager.SCROLL_STATE_IDLE) ? 1f : 0f)
@@ -71,6 +72,7 @@ public class ArticleDetailActivity extends ActionBarActivity
 
             @Override
             public void onPageSelected(int position) {
+                Log.i(TAG,"OnPageChangeListener    onPageSelected");
                 if (mCursor != null) {
                     mCursor.moveToPosition(position);
                 }
