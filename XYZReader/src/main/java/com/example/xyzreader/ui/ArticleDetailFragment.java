@@ -4,8 +4,10 @@ import android.app.Fragment;
 import android.app.LoaderManager;
 import android.content.Intent;
 import android.content.Loader;
+import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.graphics.Rect;
 import android.graphics.Typeface;
@@ -15,17 +17,25 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.GregorianCalendar;
+import java.util.Timer;
+import java.util.TimerTask;
 
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Message;
+import android.support.design.widget.FloatingActionButton;
+import android.support.v4.app.NotificationCompat;
 import android.support.v4.app.ShareCompat;
 import android.support.v7.graphics.Palette;
 import android.text.Html;
+import android.text.TextUtils;
 import android.text.format.DateUtils;
 import android.text.method.LinkMovementMethod;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
 
@@ -33,6 +43,9 @@ import com.android.volley.VolleyError;
 import com.android.volley.toolbox.ImageLoader;
 import com.example.xyzreader.R;
 import com.example.xyzreader.data.ArticleLoader;
+import com.example.xyzreader.data.ItemsContract;
+
+import static android.content.Context.MODE_PRIVATE;
 
 /**
  * A fragment representing a single Article detail screen. This fragment is
@@ -40,11 +53,12 @@ import com.example.xyzreader.data.ArticleLoader;
  * tablets) or a {@link ArticleDetailActivity} on handsets.
  */
 public class ArticleDetailFragment extends Fragment implements
-        LoaderManager.LoaderCallbacks<Cursor> {
+        LoaderManager.LoaderCallbacks<Cursor>{
     private static final String TAG = "ArticleDetailFragment";
 
     public static final String ARG_ITEM_ID = "item_id";
     private static final float PARALLAX_FACTOR = 1.25f;
+    public static final int UPDATE_BODY = 1;
 
     private Cursor mCursor;
     private long mItemId;
@@ -60,6 +74,12 @@ public class ArticleDetailFragment extends Fragment implements
     private int mScrollY;
     private boolean mIsCard = false;
     private int mStatusBarFullOpacityBottom;
+    private TextView bodyView;
+    private String bodyString;
+    private Boolean firstAdd=true;
+    private ImageButton toTop;
+    private FloatingActionButton share;
+    private Boolean cancelLoaderImage=false;
 
     private SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.sss");
     // Use default locale format
@@ -124,6 +144,26 @@ public class ArticleDetailFragment extends Fragment implements
             }
         });
 
+        toTop=(ImageButton) mRootView.findViewById(R.id.to_top);
+        toTop.setVisibility(View.GONE);
+        toTop.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                mScrollView.scrollTo(0,0);
+                toTop.setVisibility(View.GONE);
+            }
+        });
+        share=(FloatingActionButton)mRootView.findViewById(R.id.share_fab);
+        share.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                startActivity(Intent.createChooser(ShareCompat.IntentBuilder.from(getActivity())
+                        .setType("text/plain")
+                        .setText("Some sample text")
+                        .getIntent(), getString(R.string.action_share)));
+            }
+        });
+
         mScrollView = (ObservableScrollView) mRootView.findViewById(R.id.scrollview);
         mScrollView.setCallbacks(new ObservableScrollView.Callbacks() {
             @Override
@@ -131,7 +171,46 @@ public class ArticleDetailFragment extends Fragment implements
                 mScrollY = mScrollView.getScrollY();
                 getActivityCast().onUpButtonFloorChanged(mItemId, ArticleDetailFragment.this);
                 mPhotoContainerView.setTranslationY((int) (mScrollY - mScrollY / PARALLAX_FACTOR));
-                updateStatusBar();
+                //updateStatusBar();
+            }
+        });
+        //分段读取，提高性能
+        mScrollView.setTopOrBottomCallbacks(new ObservableScrollView.TopOrBottomCallbacks() {
+            @Override
+            public void onScrolledToTop(){
+                toTop.setVisibility(View.GONE);
+            }
+
+            @Override
+            public void onScrolledToBottom() {
+                addBody();
+            }
+        });
+        mScrollView.setScrollModel(new ObservableScrollView.ScrollModel() {
+            int up=0;
+            int down=0;
+            @Override
+            public void scrollDown(int t, int oldt) {
+                down+=(t-oldt);
+                if(down>100){
+                    toTop.setVisibility(View.GONE);
+                    share.hide();
+                    hideSystemUI();
+                }
+                up=0;
+            }
+
+            @Override
+            public void scrollUp(int t, int oldt) {
+                up+=(oldt-t);//连续向上偏移总量
+                if(up>2000){
+                    toTop.setVisibility(View.VISIBLE);
+                }
+                if(up>100){
+                    share.show();
+                    showSystemUI();
+                }
+                down=0;
             }
         });
 
@@ -140,21 +219,12 @@ public class ArticleDetailFragment extends Fragment implements
 
         mStatusBarColorDrawable = new ColorDrawable(0);
 
-        mRootView.findViewById(R.id.share_fab).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                startActivity(Intent.createChooser(ShareCompat.IntentBuilder.from(getActivity())
-                        .setType("text/plain")
-                        .setText("Some sample text")
-                        .getIntent(), getString(R.string.action_share)));
-            }
-        });
-
         bindViews();
-        updateStatusBar();
+        //updateStatusBar();
         return mRootView;
     }
 
+    /*
     private void updateStatusBar() {
         int color = 0;
         if (mPhotoView != null && mTopInset != 0 && mScrollY > 0) {
@@ -169,6 +239,7 @@ public class ArticleDetailFragment extends Fragment implements
         mStatusBarColorDrawable.setColor(color);
         mDrawInsetsFrameLayout.setInsetBackground(mStatusBarColorDrawable);
     }
+    */
 
     static float progress(float v, float min, float max) {
         return constrain((v - min) / (max - min), 0, 1);
@@ -189,8 +260,6 @@ public class ArticleDetailFragment extends Fragment implements
             String date = mCursor.getString(ArticleLoader.Query.PUBLISHED_DATE);
             return dateFormat.parse(date);
         } catch (ParseException ex) {
-            Log.e(TAG, ex.getMessage());
-            Log.i(TAG, "passing today's date");
             return new Date();
         }
     }
@@ -203,10 +272,9 @@ public class ArticleDetailFragment extends Fragment implements
         TextView titleView = (TextView) mRootView.findViewById(R.id.article_title);
         TextView bylineView = (TextView) mRootView.findViewById(R.id.article_byline);
         bylineView.setMovementMethod(new LinkMovementMethod());
-        TextView bodyView = (TextView) mRootView.findViewById(R.id.article_body);
-
-
-        bodyView.setTypeface(Typeface.createFromAsset(getResources().getAssets(), "Rosario-Regular.ttf"));
+        bodyView = (TextView) mRootView.findViewById(R.id.article_body);
+        bodyView.setTypeface(Typeface.createFromAsset(getResources().getAssets(), "9t.ttf"));
+        bodyView.setTextColor(getActivityCast().getResources().getColor(R.color.reader_body));
 
         if (mCursor != null) {
             mRootView.setAlpha(0);
@@ -232,33 +300,78 @@ public class ArticleDetailFragment extends Fragment implements
                                 + "</font>"));
 
             }
-            bodyView.setText(Html.fromHtml(mCursor.getString(ArticleLoader.Query.BODY).replaceAll("(\r\n|\n)", "<br />")));
+            bodyString=mCursor.getString(ArticleLoader.Query.BODY);
+            //分段读取，提高性能
+            addBody();
             ImageLoaderHelper.getInstance(getActivity()).getImageLoader()
                     .get(mCursor.getString(ArticleLoader.Query.PHOTO_URL), new ImageLoader.ImageListener() {
                         @Override
                         public void onResponse(ImageLoader.ImageContainer imageContainer, boolean b) {
-                            Bitmap bitmap = imageContainer.getBitmap();
-                            if (bitmap != null) {
-                                Palette p = Palette.generate(bitmap, 12);
-                                mMutedColor = p.getDarkMutedColor(0xFF333333);
-                                mPhotoView.setImageBitmap(imageContainer.getBitmap());
-                                mRootView.findViewById(R.id.meta_bar)
-                                        .setBackgroundColor(mMutedColor);
-                                updateStatusBar();
+                            if(!cancelLoaderImage){
+                                Bitmap bitmap = imageContainer.getBitmap();
+                                if (bitmap != null) {
+                                    Palette p = Palette.generate(bitmap, 12);
+                                    mMutedColor = p.getDarkMutedColor(0xFF333333);
+                                    mPhotoView.setImageBitmap(imageContainer.getBitmap());
+                                    mRootView.findViewById(R.id.meta_bar)
+                                            .setBackgroundColor(mMutedColor);
+                                    //updateStatusBar();
+                                }
                             }
                         }
 
                         @Override
                         public void onErrorResponse(VolleyError volleyError) {
-
+                            if(!cancelLoaderImage){
+                                mPhotoView.setImageBitmap(BitmapFactory.decodeResource(getActivityCast().getResources(),R.drawable.error_image));
+                            }
                         }
                     });
         } else {
-            mRootView.setVisibility(View.GONE);
-            titleView.setText("N/A");
-            bylineView.setText("N/A" );
-            bodyView.setText("N/A");
+            //mRootView.setVisibility(View.GONE);
+            mPhotoView.setImageBitmap(BitmapFactory.decodeResource(getActivityCast().getResources(),R.drawable.empty_detail));
+            String appName=getActivityCast().getResources().getString(R.string.app_name);
+            titleView.setText(appName);
+            bylineView.setText(appName);
+            bodyView.setText(appName);
         }
+    }
+
+    private void addBody(){
+        if(bodyView!=null&& !TextUtils.isEmpty(bodyString)){
+            int i=bodyString.length()>=2000?2000:bodyString.length();
+            if(firstAdd){
+                bodyView.setText(bodyString.substring(0,i));
+                //bodyView.setText(Html.fromHtml(bodyString.substring(0,i).replaceAll("(\r\n|\n)", "<br />")));
+                firstAdd=false;
+            }else {
+                bodyView.append(bodyString.substring(0,i));
+                //bodyView.append(Html.fromHtml(bodyString.substring(0,i).replaceAll("(\r\n|\n)", "<br />")));
+            }
+            bodyString=bodyString.substring(i);
+        }
+    }
+
+    private void hideSystemUI() {
+        // Set the IMMERSIVE flag.
+        // Set the content to appear under the system bars so that the content
+        // doesn't resize when the system bars hide and show.
+        getActivityCast().getWindow().getDecorView().setSystemUiVisibility(
+                View.SYSTEM_UI_FLAG_LAYOUT_STABLE
+                        | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
+                        | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
+                        //  | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION // hide nav bar
+                        | View.SYSTEM_UI_FLAG_FULLSCREEN // hide status bar
+                        | View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
+        );
+    }
+    private void showSystemUI() {
+        getActivity().getWindow().getDecorView().setSystemUiVisibility(
+                View.SYSTEM_UI_FLAG_LAYOUT_STABLE
+                        | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
+                        | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
+                        | View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
+        );
     }
 
     @Override
@@ -300,5 +413,12 @@ public class ArticleDetailFragment extends Fragment implements
         return mIsCard
                 ? (int) mPhotoContainerView.getTranslationY() + mPhotoView.getHeight() - mScrollY
                 : mPhotoView.getHeight() - mScrollY;
+    }
+
+    @Override
+    public void onDestroy(){
+        super.onDestroy();
+        bodyString=null;
+        cancelLoaderImage=true;
     }
 }

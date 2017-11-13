@@ -27,6 +27,8 @@ import android.widget.ScrollView;
  */
 public class ObservableScrollView extends ScrollView {
     private Callbacks mCallbacks;
+    private TopOrBottomCallbacks topOrBottomCallbacks;
+    private ScrollModel scrollModel;
 
     public ObservableScrollView(Context context, AttributeSet attrs) {
         super(context, attrs);
@@ -37,6 +39,19 @@ public class ObservableScrollView extends ScrollView {
         super.onScrollChanged(l, t, oldl, oldt);
         if (mCallbacks != null) {
             mCallbacks.onScrollChanged();
+        }
+        int schedule=getScrollY()+getHeight()-getPaddingTop()-getPaddingBottom();
+        if((schedule==getChildAt(0).getHeight())&&topOrBottomCallbacks!=null){
+            topOrBottomCallbacks.onScrolledToBottom();
+        }
+        if(schedule==getHeight()&&topOrBottomCallbacks!=null){
+            topOrBottomCallbacks.onScrolledToTop();
+        }
+        if(t>oldt&&scrollModel!=null){
+            scrollModel.scrollDown(t,oldt);
+        }
+        if(t<oldt&&scrollModel!=null){
+            scrollModel.scrollUp(t,oldt);
         }
     }
 
@@ -58,8 +73,22 @@ public class ObservableScrollView extends ScrollView {
     public void setCallbacks(Callbacks listener) {
         mCallbacks = listener;
     }
+    public void setTopOrBottomCallbacks(TopOrBottomCallbacks s){
+        topOrBottomCallbacks=s;
+    }
+    public void setScrollModel(ScrollModel s){
+        scrollModel=s;
+    }
 
     public static interface Callbacks {
         public void onScrollChanged();
+    }
+    public interface TopOrBottomCallbacks{
+        public void onScrolledToTop();
+        public void onScrolledToBottom();
+    }
+    public interface ScrollModel{
+        public void scrollDown(int t, int oldt);
+        public void scrollUp(int t, int oldt);
     }
 }
