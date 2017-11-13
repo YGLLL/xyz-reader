@@ -35,7 +35,7 @@
                 android:layout_height="wrap_content"
                 android:layout_gravity="center_horizontal"
                 android:maxWidth="@dimen/detail_card_max_width"
-                android:background="#fff"
+                android:background="@color/reader_back"
                 android:elevation="2dp"
                 android:layout_marginTop="@dimen/detail_card_top_margin">
 

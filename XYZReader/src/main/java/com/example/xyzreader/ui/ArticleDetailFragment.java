@@ -79,6 +79,7 @@ public class ArticleDetailFragment extends Fragment implements
     private Boolean firstAdd=true;
     private ImageButton toTop;
     private FloatingActionButton share;
+    private Boolean cancelLoaderImage=false;
 
     private SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.sss");
     // Use default locale format
@@ -121,7 +122,6 @@ public class ArticleDetailFragment extends Fragment implements
 
     @Override
     public void onActivityCreated(Bundle savedInstanceState) {
-        Log.i(TAG,"onActivityCreated"+mItemId);
         super.onActivityCreated(savedInstanceState);
 
         // In support library r8, calling initLoader for a fragment in a FragmentPagerAdapter in
@@ -274,6 +274,7 @@ public class ArticleDetailFragment extends Fragment implements
         bylineView.setMovementMethod(new LinkMovementMethod());
         bodyView = (TextView) mRootView.findViewById(R.id.article_body);
         bodyView.setTypeface(Typeface.createFromAsset(getResources().getAssets(), "9t.ttf"));
+        bodyView.setTextColor(getActivityCast().getResources().getColor(R.color.reader_body));
 
         if (mCursor != null) {
             mRootView.setAlpha(0);
@@ -306,30 +307,33 @@ public class ArticleDetailFragment extends Fragment implements
                     .get(mCursor.getString(ArticleLoader.Query.PHOTO_URL), new ImageLoader.ImageListener() {
                         @Override
                         public void onResponse(ImageLoader.ImageContainer imageContainer, boolean b) {
-                            Bitmap bitmap = imageContainer.getBitmap();
-                            if (bitmap != null) {
-                                Palette p = Palette.generate(bitmap, 12);
-                                mMutedColor = p.getDarkMutedColor(0xFF333333);
-                                mPhotoView.setImageBitmap(imageContainer.getBitmap());
-                                mRootView.findViewById(R.id.meta_bar)
-                                        .setBackgroundColor(mMutedColor);
-                                //updateStatusBar();
+                            if(!cancelLoaderImage){
+                                Bitmap bitmap = imageContainer.getBitmap();
+                                if (bitmap != null) {
+                                    Palette p = Palette.generate(bitmap, 12);
+                                    mMutedColor = p.getDarkMutedColor(0xFF333333);
+                                    mPhotoView.setImageBitmap(imageContainer.getBitmap());
+                                    mRootView.findViewById(R.id.meta_bar)
+                                            .setBackgroundColor(mMutedColor);
+                                    //updateStatusBar();
+                                }
                             }
                         }
 
                         @Override
                         public void onErrorResponse(VolleyError volleyError) {
-                            //if(mPhotoView!=null){
-                            //    mPhotoView.setImageBitmap(BitmapFactory.decodeResource(getActivityCast().getResources(),R.drawable.error_image));
-                            //}
+                            if(!cancelLoaderImage){
+                                mPhotoView.setImageBitmap(BitmapFactory.decodeResource(getActivityCast().getResources(),R.drawable.error_image));
+                            }
                         }
                     });
         } else {
-            // TODO: 2017/11/10 升级空白屏内容 
             //mRootView.setVisibility(View.GONE);
-            titleView.setText("N/A");
-            bylineView.setText("N/A" );
-            bodyView.setText("N/A");
+            mPhotoView.setImageBitmap(BitmapFactory.decodeResource(getActivityCast().getResources(),R.drawable.empty_detail));
+            String appName=getActivityCast().getResources().getString(R.string.app_name);
+            titleView.setText(appName);
+            bylineView.setText(appName);
+            bodyView.setText(appName);
         }
     }
 
@@ -409,5 +413,12 @@ public class ArticleDetailFragment extends Fragment implements
         return mIsCard
                 ? (int) mPhotoContainerView.getTranslationY() + mPhotoView.getHeight() - mScrollY
                 : mPhotoView.getHeight() - mScrollY;
+    }
+
+    @Override
+    public void onDestroy(){
+        super.onDestroy();
+        bodyString=null;
+        cancelLoaderImage=true;
     }
 }
