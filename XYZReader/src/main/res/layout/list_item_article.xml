@@ -8,7 +8,7 @@
     android:layout_marginBottom="@dimen/card_margin"
     android:clickable="true"
     android:focusable="true"
-    android:foreground="@anim/card_foreground"
+    android:foreground="@drawable/card_foreground"
     app:cardElevation="1dp">
 
     <LinearLayout

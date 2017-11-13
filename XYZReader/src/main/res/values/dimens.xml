@@ -11,4 +11,7 @@
     <dimen name="activity_article_control_views_margin">16dp</dimen>
     <dimen name="toolbar_height">8dp</dimen>
     <dimen name="card_margin">4dp</dimen>
+
+    <dimen name="fab_size">56dp</dimen>
+    <dimen name="to_top_margin_bottom">200dp</dimen>
 </resources>

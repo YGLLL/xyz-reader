@@ -23,6 +23,7 @@ import java.util.TimerTask;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
+import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.NotificationCompat;
 import android.support.v4.app.ShareCompat;
 import android.support.v7.graphics.Palette;
@@ -34,6 +35,7 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
 
@@ -75,6 +77,8 @@ public class ArticleDetailFragment extends Fragment implements
     private TextView bodyView;
     private String bodyString;
     private Boolean firstAdd=true;
+    private ImageButton toTop;
+    private FloatingActionButton share;
 
     private SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.sss");
     // Use default locale format
@@ -140,6 +144,26 @@ public class ArticleDetailFragment extends Fragment implements
             }
         });
 
+        toTop=(ImageButton) mRootView.findViewById(R.id.to_top);
+        toTop.setVisibility(View.GONE);
+        toTop.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                mScrollView.scrollTo(0,0);
+                toTop.setVisibility(View.GONE);
+            }
+        });
+        share=(FloatingActionButton)mRootView.findViewById(R.id.share_fab);
+        share.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                startActivity(Intent.createChooser(ShareCompat.IntentBuilder.from(getActivity())
+                        .setType("text/plain")
+                        .setText("Some sample text")
+                        .getIntent(), getString(R.string.action_share)));
+            }
+        });
+
         mScrollView = (ObservableScrollView) mRootView.findViewById(R.id.scrollview);
         mScrollView.setCallbacks(new ObservableScrollView.Callbacks() {
             @Override
@@ -147,14 +171,46 @@ public class ArticleDetailFragment extends Fragment implements
                 mScrollY = mScrollView.getScrollY();
                 getActivityCast().onUpButtonFloorChanged(mItemId, ArticleDetailFragment.this);
                 mPhotoContainerView.setTranslationY((int) (mScrollY - mScrollY / PARALLAX_FACTOR));
-                updateStatusBar();
+                //updateStatusBar();
             }
         });
         //分段读取，提高性能
-        mScrollView.setScrolledToBottomCallbacks(new ObservableScrollView.ScrolledToBottomCallbacks() {
+        mScrollView.setTopOrBottomCallbacks(new ObservableScrollView.TopOrBottomCallbacks() {
+            @Override
+            public void onScrolledToTop(){
+                toTop.setVisibility(View.GONE);
+            }
+
             @Override
             public void onScrolledToBottom() {
                 addBody();
+            }
+        });
+        mScrollView.setScrollModel(new ObservableScrollView.ScrollModel() {
+            int up=0;
+            int down=0;
+            @Override
+            public void scrollDown(int t, int oldt) {
+                down+=(t-oldt);
+                if(down>100){
+                    toTop.setVisibility(View.GONE);
+                    share.hide();
+                    hideSystemUI();
+                }
+                up=0;
+            }
+
+            @Override
+            public void scrollUp(int t, int oldt) {
+                up+=(oldt-t);//连续向上偏移总量
+                if(up>2000){
+                    toTop.setVisibility(View.VISIBLE);
+                }
+                if(up>100){
+                    share.show();
+                    showSystemUI();
+                }
+                down=0;
             }
         });
 
@@ -163,21 +219,12 @@ public class ArticleDetailFragment extends Fragment implements
 
         mStatusBarColorDrawable = new ColorDrawable(0);
 
-        mRootView.findViewById(R.id.share_fab).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                startActivity(Intent.createChooser(ShareCompat.IntentBuilder.from(getActivity())
-                        .setType("text/plain")
-                        .setText("Some sample text")
-                        .getIntent(), getString(R.string.action_share)));
-            }
-        });
-
         bindViews();
-        updateStatusBar();
+        //updateStatusBar();
         return mRootView;
     }
 
+    /*
     private void updateStatusBar() {
         int color = 0;
         if (mPhotoView != null && mTopInset != 0 && mScrollY > 0) {
@@ -192,6 +239,7 @@ public class ArticleDetailFragment extends Fragment implements
         mStatusBarColorDrawable.setColor(color);
         mDrawInsetsFrameLayout.setInsetBackground(mStatusBarColorDrawable);
     }
+    */
 
     static float progress(float v, float min, float max) {
         return constrain((v - min) / (max - min), 0, 1);
@@ -225,8 +273,6 @@ public class ArticleDetailFragment extends Fragment implements
         TextView bylineView = (TextView) mRootView.findViewById(R.id.article_byline);
         bylineView.setMovementMethod(new LinkMovementMethod());
         bodyView = (TextView) mRootView.findViewById(R.id.article_body);
-
-
         bodyView.setTypeface(Typeface.createFromAsset(getResources().getAssets(), "9t.ttf"));
 
         if (mCursor != null) {
@@ -267,7 +313,7 @@ public class ArticleDetailFragment extends Fragment implements
                                 mPhotoView.setImageBitmap(imageContainer.getBitmap());
                                 mRootView.findViewById(R.id.meta_bar)
                                         .setBackgroundColor(mMutedColor);
-                                updateStatusBar();
+                                //updateStatusBar();
                             }
                         }
 
@@ -300,6 +346,28 @@ public class ArticleDetailFragment extends Fragment implements
             }
             bodyString=bodyString.substring(i);
         }
+    }
+
+    private void hideSystemUI() {
+        // Set the IMMERSIVE flag.
+        // Set the content to appear under the system bars so that the content
+        // doesn't resize when the system bars hide and show.
+        getActivityCast().getWindow().getDecorView().setSystemUiVisibility(
+                View.SYSTEM_UI_FLAG_LAYOUT_STABLE
+                        | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
+                        | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
+                        //  | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION // hide nav bar
+                        | View.SYSTEM_UI_FLAG_FULLSCREEN // hide status bar
+                        | View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
+        );
+    }
+    private void showSystemUI() {
+        getActivity().getWindow().getDecorView().setSystemUiVisibility(
+                View.SYSTEM_UI_FLAG_LAYOUT_STABLE
+                        | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
+                        | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
+                        | View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
+        );
     }
 
     @Override
