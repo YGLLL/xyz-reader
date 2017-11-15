@@ -81,7 +81,6 @@
                     android:layout_marginRight="@dimen/detail_inner_horiz_margin"
                     android:paddingBottom="@dimen/detail_body_bottom_margin"
                     android:textColor="@color/reader_body"
-                    android:textColorLink="@color/theme_accent"
                     android:textSize="@dimen/detail_body_text_size"
                     android:lineSpacingMultiplier="@fraction/detail_body_line_spacing_multiplier" />
 
@@ -94,8 +93,7 @@
         android:layout_height="wrap_content"
         android:layout_gravity="bottom|end"
         android:layout_marginRight="@dimen/fab_margin"
-        android:layout_marginBottom="@dimen/to_top_margin_bottom"
-        android:elevation="@dimen/fab_elevation">
+        android:layout_marginBottom="@dimen/to_top_margin_bottom">
 
         <ImageButton
             android:id="@+id/to_top"
@@ -114,7 +112,6 @@
         android:layout_gravity="bottom|end"
         android:layout_marginRight="@dimen/fab_margin"
         android:layout_marginBottom="@dimen/fab_margin"
-        android:elevation="@dimen/fab_elevation"
         android:contentDescription="@string/action_share"/>
 
 </com.example.xyzreader.ui.DrawInsetsFrameLayout>

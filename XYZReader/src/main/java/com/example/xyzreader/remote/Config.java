@@ -13,9 +13,8 @@ public class Config {
         URL url = null;
         try {
             //https://go.udacity.com/xyz-reader-json
-            //https://d17h27t6h515a5.cloudfront.net/topher/2017/March/58c5d68f_xyz-reader/xyz-reader.json
             //http://192.168.43.247/docs/a.json
-            url = new URL("https://go.udacity.com/xyz-reader-json" );
+            url = new URL("https://go.udacity.com/xyz-reader-json");
         } catch (MalformedURLException ignored) {
             // TODO: throw a real error
             Log.e(TAG, "Please check your internet connection.");

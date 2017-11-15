@@ -203,10 +203,8 @@ public class ArticleDetailFragment extends Fragment implements
             @Override
             public void scrollUp(int t, int oldt) {
                 up+=(oldt-t);//连续向上偏移总量
-                if(up>2000){
-                    toTop.setVisibility(View.VISIBLE);
-                }
                 if(up>100){
+                    toTop.setVisibility(View.VISIBLE);
                     share.show();
                     showSystemUI();
                 }
@@ -274,7 +272,6 @@ public class ArticleDetailFragment extends Fragment implements
         bylineView.setMovementMethod(new LinkMovementMethod());
         bodyView = (TextView) mRootView.findViewById(R.id.article_body);
         bodyView.setTypeface(Typeface.createFromAsset(getResources().getAssets(), "9t.ttf"));
-        bodyView.setTextColor(getActivityCast().getResources().getColor(R.color.reader_body));
 
         if (mCursor != null) {
             mRootView.setAlpha(0);
@@ -310,6 +307,8 @@ public class ArticleDetailFragment extends Fragment implements
                             if(!cancelLoaderImage){
                                 Bitmap bitmap = imageContainer.getBitmap();
                                 if (bitmap != null) {
+                                    //Maybe I will optimize it next time
+                                    // TODO: 2017/11/15 在加载图片线程中拾取颜色 
                                     Palette p = Palette.generate(bitmap, 12);
                                     mMutedColor = p.getDarkMutedColor(0xFF333333);
                                     mPhotoView.setImageBitmap(imageContainer.getBitmap());
@@ -330,10 +329,10 @@ public class ArticleDetailFragment extends Fragment implements
         } else {
             //mRootView.setVisibility(View.GONE);
             mPhotoView.setImageBitmap(BitmapFactory.decodeResource(getActivityCast().getResources(),R.drawable.empty_detail));
-            String appName=getActivityCast().getResources().getString(R.string.app_name);
-            titleView.setText(appName);
-            bylineView.setText(appName);
-            bodyView.setText(appName);
+            //String appName=getActivityCast().getResources().getString(R.string.app_name);
+            //titleView.setText(appName);
+            //bylineView.setText(appName);
+            //bodyView.setText(appName);
         }
     }
 
@@ -342,6 +341,8 @@ public class ArticleDetailFragment extends Fragment implements
             int i=bodyString.length()>=2000?2000:bodyString.length();
             if(firstAdd){
                 bodyView.setText(bodyString.substring(0,i));
+                //Using this API will result in a bug, Maybe I will optimize it next time
+                // TODO: 2017/11/15 使用Html API 
                 //bodyView.setText(Html.fromHtml(bodyString.substring(0,i).replaceAll("(\r\n|\n)", "<br />")));
                 firstAdd=false;
             }else {

@@ -26,13 +26,21 @@
     <color name="Black">#000000</color>
     <color name="MinBlack">#404040</color>
     <color name="white">#FFFFFF</color>
-    <color name="colorPrimary">#FF4500</color>
-    <color name="colorPrimaryDark">#FF4500</color>
-    <color name="colorAccent">#FF6500</color>
+    <color name="colorPrimary">@color/Orange500</color>
+    <color name="colorPrimaryDark">@color/Orange700</color>
+    <color name="colorAccent">@color/GreenA200</color>
     <color name="Gray">#F0F0F0F0</color>
     <color name="Transparent">#00000000</color>
     <color name="little_black">#50000000</color>
     <color name="reader_back">#F0F0F0</color>
     <color name="reader_body">#303030</color>
     <color name="subtitle">#6000</color>
+
+    <!--Deep Orange-->
+    <!--500-->
+    <color name="Orange500">#FF5722</color>
+    <!--700-->
+    <color name="Orange700">#c41c00</color>
+    <!--Green a200-->
+    <color name="GreenA200">#69F0AE</color>
 </resources>
