@@ -75,8 +75,8 @@ public class ArticleDetailFragment extends Fragment implements
     private boolean mIsCard = false;
     private int mStatusBarFullOpacityBottom;
     private TextView bodyView;
-    private String bodyString;
-    private Boolean firstAdd=true;
+    //private String bodyString;
+    //private Boolean firstAdd=true;
     private ImageButton toTop;
     private FloatingActionButton share;
     private Boolean cancelLoaderImage=false;
@@ -174,7 +174,6 @@ public class ArticleDetailFragment extends Fragment implements
                 //updateStatusBar();
             }
         });
-        //分段读取，提高性能
         mScrollView.setTopOrBottomCallbacks(new ObservableScrollView.TopOrBottomCallbacks() {
             @Override
             public void onScrolledToTop(){
@@ -183,7 +182,7 @@ public class ArticleDetailFragment extends Fragment implements
 
             @Override
             public void onScrolledToBottom() {
-                addBody();
+                //addBody();
             }
         });
         mScrollView.setScrollModel(new ObservableScrollView.ScrollModel() {
@@ -269,9 +268,9 @@ public class ArticleDetailFragment extends Fragment implements
 
         TextView titleView = (TextView) mRootView.findViewById(R.id.article_title);
         TextView bylineView = (TextView) mRootView.findViewById(R.id.article_byline);
-        bylineView.setMovementMethod(new LinkMovementMethod());
         bodyView = (TextView) mRootView.findViewById(R.id.article_body);
         bodyView.setTypeface(Typeface.createFromAsset(getResources().getAssets(), "9t.ttf"));
+        bodyView.setMovementMethod(new LinkMovementMethod());
 
         if (mCursor != null) {
             mRootView.setAlpha(0);
@@ -297,9 +296,8 @@ public class ArticleDetailFragment extends Fragment implements
                                 + "</font>"));
 
             }
-            bodyString=mCursor.getString(ArticleLoader.Query.BODY);
-            //分段读取，提高性能
-            addBody();
+            //bodyString=mCursor.getString(ArticleLoader.Query.BODY);
+            bodyView.setText(Html.fromHtml(mCursor.getString(ArticleLoader.Query.BODY).replaceAll("(\r\n|\n)", "<br />")));
             ImageLoaderHelper.getInstance(getActivity()).getImageLoader()
                     .get(mCursor.getString(ArticleLoader.Query.PHOTO_URL), new ImageLoader.ImageListener() {
                         @Override
@@ -336,22 +334,21 @@ public class ArticleDetailFragment extends Fragment implements
         }
     }
 
+    /*
+    //Improve performance
     private void addBody(){
         if(bodyView!=null&& !TextUtils.isEmpty(bodyString)){
-            int i=bodyString.length()>=2000?2000:bodyString.length();
+            int i=bodyString.length()>=5000?5000:bodyString.length();
             if(firstAdd){
-                bodyView.setText(bodyString.substring(0,i));
-                //Using this API will result in a bug, Maybe I will optimize it next time
-                // TODO: 2017/11/15 使用Html API 
-                //bodyView.setText(Html.fromHtml(bodyString.substring(0,i).replaceAll("(\r\n|\n)", "<br />")));
+                bodyView.setText(Html.fromHtml(bodyString.substring(0,i).replaceAll("(\r\n|\n)", "<br />")));
                 firstAdd=false;
             }else {
-                bodyView.append(bodyString.substring(0,i));
-                //bodyView.append(Html.fromHtml(bodyString.substring(0,i).replaceAll("(\r\n|\n)", "<br />")));
+                bodyView.append(Html.fromHtml(bodyString.substring(0,i).replaceAll("(\r\n|\n)", "<br />")));
             }
             bodyString=bodyString.substring(i);
         }
     }
+    */
 
     private void hideSystemUI() {
         // Set the IMMERSIVE flag.
@@ -419,7 +416,7 @@ public class ArticleDetailFragment extends Fragment implements
     @Override
     public void onDestroy(){
         super.onDestroy();
-        bodyString=null;
+        //bodyString=null;
         cancelLoaderImage=true;
     }
 }

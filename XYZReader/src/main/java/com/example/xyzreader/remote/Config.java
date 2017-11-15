@@ -12,9 +12,13 @@ public class Config {
     static {
         URL url = null;
         try {
+            //This API has seriously misled me
+            //Udacity should provide the correct API
             //https://go.udacity.com/xyz-reader-json
+
             //http://192.168.43.247/docs/a.json
-            url = new URL("https://go.udacity.com/xyz-reader-json");
+            //https://raw.githubusercontent.com/TNTest/xyzreader/master/data.json
+            url = new URL("https://raw.githubusercontent.com/TNTest/xyzreader/master/data.json");
         } catch (MalformedURLException ignored) {
             // TODO: throw a real error
             Log.e(TAG, "Please check your internet connection.");
