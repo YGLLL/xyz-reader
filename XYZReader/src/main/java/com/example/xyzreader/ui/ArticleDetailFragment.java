@@ -171,7 +171,7 @@ public class ArticleDetailFragment extends Fragment implements
                 mScrollY = mScrollView.getScrollY();
                 getActivityCast().onUpButtonFloorChanged(mItemId, ArticleDetailFragment.this);
                 mPhotoContainerView.setTranslationY((int) (mScrollY - mScrollY / PARALLAX_FACTOR));
-                //updateStatusBar();
+                updateStatusBar();
             }
         });
         mScrollView.setTopOrBottomCallbacks(new ObservableScrollView.TopOrBottomCallbacks() {
@@ -194,7 +194,6 @@ public class ArticleDetailFragment extends Fragment implements
                 if(down>100){
                     toTop.setVisibility(View.GONE);
                     share.hide();
-                    hideSystemUI();
                 }
                 up=0;
             }
@@ -205,7 +204,6 @@ public class ArticleDetailFragment extends Fragment implements
                 if(up>100){
                     toTop.setVisibility(View.VISIBLE);
                     share.show();
-                    showSystemUI();
                 }
                 down=0;
             }
@@ -217,11 +215,10 @@ public class ArticleDetailFragment extends Fragment implements
         mStatusBarColorDrawable = new ColorDrawable(0);
 
         bindViews();
-        //updateStatusBar();
+        updateStatusBar();
         return mRootView;
     }
 
-    /*
     private void updateStatusBar() {
         int color = 0;
         if (mPhotoView != null && mTopInset != 0 && mScrollY > 0) {
@@ -236,7 +233,6 @@ public class ArticleDetailFragment extends Fragment implements
         mStatusBarColorDrawable.setColor(color);
         mDrawInsetsFrameLayout.setInsetBackground(mStatusBarColorDrawable);
     }
-    */
 
     static float progress(float v, float min, float max) {
         return constrain((v - min) / (max - min), 0, 1);
@@ -312,7 +308,7 @@ public class ArticleDetailFragment extends Fragment implements
                                     mPhotoView.setImageBitmap(imageContainer.getBitmap());
                                     mRootView.findViewById(R.id.meta_bar)
                                             .setBackgroundColor(mMutedColor);
-                                    //updateStatusBar();
+                                    updateStatusBar();
                                 }
                             }
                         }
@@ -349,28 +345,6 @@ public class ArticleDetailFragment extends Fragment implements
         }
     }
     */
-
-    private void hideSystemUI() {
-        // Set the IMMERSIVE flag.
-        // Set the content to appear under the system bars so that the content
-        // doesn't resize when the system bars hide and show.
-        getActivityCast().getWindow().getDecorView().setSystemUiVisibility(
-                View.SYSTEM_UI_FLAG_LAYOUT_STABLE
-                        | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
-                        | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
-                        //  | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION // hide nav bar
-                        | View.SYSTEM_UI_FLAG_FULLSCREEN // hide status bar
-                        | View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
-        );
-    }
-    private void showSystemUI() {
-        getActivity().getWindow().getDecorView().setSystemUiVisibility(
-                View.SYSTEM_UI_FLAG_LAYOUT_STABLE
-                        | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
-                        | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
-                        | View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
-        );
-    }
 
     @Override
     public Loader<Cursor> onCreateLoader(int i, Bundle bundle) {
