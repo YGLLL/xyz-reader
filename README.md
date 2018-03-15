@@ -6,7 +6,7 @@
 ![](https://github.com/YGLLL/xyz-reader/blob/master/screenshot/3.jpg)
 ![](https://github.com/YGLLL/xyz-reader/blob/master/screenshot/2.jpg)
 
-##进行的优化工作
+## 进行的优化工作
 - 使得Toolbar和FAB根据用户的动作进行隐藏和显示
 - 在合适的地方将图片扩展至状态栏
 - 根据google的材料设计规范为View设置合适的 Elevation
